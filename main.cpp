@@ -1,16 +1,46 @@
 
 #include <boost/asio.hpp>
+#include <boost/variant.hpp>
 #include <iostream>
 #include <memory>
 
+//
+// Standard continuation signatures (r in our case is always void):
+//
 // Cont a : { (a -> r) -> r }
 // Cont a >>= (\a -> Cont b) = Cont b
+//
+// But Cont is actually a Monad transformer parametrized
+// over the Error monad. So the actual signature is:
+//
+// Cont a : { (E a -> r) -> r }
+//
 
 template<class A> void capture(const A&) {}
 template<class> struct Lambda;
 
+template<class A> struct Error
+    : public boost::variant<A, boost::system::error_code>
+{
+  typedef boost::system::error_code    ErrorCode;
+  typedef boost::variant<A, ErrorCode> Super;
+
+  Error(const A& a) : Super(a) {}
+  Error(ErrorCode e) : Super(e) {}
+
+  bool is_error() const {
+    if (const ErrorCode* pe = boost::get<ErrorCode>(this)) {
+      return *pe != ErrorCode(); // ErrorCode() means success.
+    }
+    return false;
+  }
+
+  const A&         value() const { return boost::get<A>(*this); }
+  const ErrorCode& error() const { return boost::get<ErrorCode>(*this); }
+};
+
 template<class A> struct Cont : public std::enable_shared_from_this<Cont<A>> {
-  typedef std::function<void(A)>    Rest;
+  typedef std::function<void(Error<A>)>    Rest;
   typedef std::function<void(Rest)> Run;
   typedef std::shared_ptr<Cont<A>>  Ptr;
 
@@ -24,7 +54,14 @@ template<class A> struct Cont : public std::enable_shared_from_this<Cont<A>> {
     auto self = this->shared_from_this();
 
     return make_shared<Lambda<B>>(([self, f](BRest brest) /* -> void */ {
-        self->run([brest,f](A a) { return f(a)->run(brest); });
+        self->run([brest,f, self](Error<A> ea) {
+            if (!ea.is_error()) {
+              f(ea.value())->run(brest);
+            }
+            else {
+              brest(Error<B>(ea.error()));
+            }
+          });
         }));
   }
 };
@@ -73,7 +110,7 @@ template<class A> struct Return : public Cont<A> {
   Return(const A& a) : value(a) {}
 
   void run(const Rest& rest) const {
-    rest(value);
+    rest(Error<A>(value));
   }
 
   A value;
@@ -84,6 +121,14 @@ template<class A> std::shared_ptr<Return<A>> success(const A& a) {
   return make_shared<Return<A>>(a);
 }
 
+template<class A>
+std::shared_ptr<Lambda<A>> fail(const boost::system::error_code& error) {
+  using namespace std;
+  return make_shared<Lambda<A>>([error](const typename Cont<A>::Rest& rest){
+      rest(Error<A>(error));
+      });
+}
+
 using namespace std;
 namespace asio = boost::asio;
 
@@ -91,21 +136,19 @@ int main() {
   asio::io_service ios;
 
   Cont<float>::Ptr p = post<int>(ios, [](Cont<int>::Rest rest) {
-    rest(10);
+    rest(Error<int>(10));
   })
   ->bind<float>([&ios](int a) {
-    return post<float>(ios, [a](Cont<int>::Rest rest) {
-      rest(2*a + 1);
+    //return fail<float>(boost::asio::error::operation_aborted);
+    return post<float>(ios, [a](Cont<float>::Rest rest) {
+      rest(Error<float>(2*a + 1));
       });
   })
   ->bind<float>([](float a) {
       return success(a+2);
-      //return make_shared<Lambda<float>>([a](Cont<float>::Rest rest){
-      //  rest(a+1);
-      //  });
-        });
+  });
 
-  p->run([](int i) { cout << "final: " << i << "\n"; });
+  p->run([](Error<float> i) { cout << "final: " << i << "\n"; });
 
   std::cout << "start\n";
   while(ios.poll_one()) {
