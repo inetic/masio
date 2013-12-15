@@ -11,7 +11,7 @@ template<class A> struct Error
   typedef boost::system::error_code    ErrorCode;
   typedef boost::variant<A, ErrorCode> Super;
 
-  Error(const A& a) : Super(a) {}
+  Error(const A& a)  : Super(a) {}
   Error(ErrorCode e) : Super(e) {}
 
   bool is_error() const {
@@ -21,8 +21,12 @@ template<class A> struct Error
     return false;
   }
 
-  const A&         value() const { return boost::get<A>(*this); }
-  const ErrorCode& error() const { return boost::get<ErrorCode>(*this); }
+  const A&  value() const { return boost::get<A>(*this); }
+
+  ErrorCode error() const {
+    if (!is_error()) { return ErrorCode(); }
+    return boost::get<ErrorCode>(*this);
+  }
 };
 
 }
