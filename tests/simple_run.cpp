@@ -6,7 +6,6 @@
 #include <masio.h>
 #include <iostream>
 
-
 using namespace masio;
 using namespace std;
 namespace asio = boost::asio;
@@ -15,10 +14,15 @@ namespace asio = boost::asio;
 BOOST_AUTO_TEST_CASE(zeroBinds) {
   Cont<int>::Ptr p = success<int>(10);
 
-  p->run([](Error<int> i) {
+  bool executed = false;
+
+  p->run([&executed](Error<int> i) {
       BOOST_REQUIRE(!i.is_error());
       BOOST_REQUIRE(i.value() == 10);
+      executed = true;
       });
+
+  BOOST_CHECK(executed);
 }
 
 //------------------------------------------------------------------------------
@@ -49,7 +53,6 @@ BOOST_AUTO_TEST_CASE(bindsAndPosts) {
     rest(Error<int>(10));
   })
   ->bind<float>([&ios](int a) {
-    //return fail<float>(boost::asio::error::operation_aborted);
     return post<float>(ios, [a](Cont<float>::Rest rest) {
       rest(Error<float>(2*a + 1));
       });
@@ -76,10 +79,15 @@ BOOST_AUTO_TEST_CASE(fail0) {
   Cont<int>::Ptr p = fail<int>(asio::error::operation_aborted)
     ->bind<int>([](int a) { return success<int>(a); });
 
-  p->run([](Error<int> i) { 
+  bool executed = false;
+
+  p->run([&executed](Error<int> i) { 
       BOOST_REQUIRE(i.is_error());
       BOOST_REQUIRE(i.error() == asio::error::operation_aborted);
+      executed = true;
       });
+
+  BOOST_CHECK(executed);
 }
 
 //------------------------------------------------------------------------------
