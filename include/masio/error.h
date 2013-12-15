@@ -21,7 +21,9 @@ template<class A> struct Error
     return false;
   }
 
-  const A&  value() const { return boost::get<A>(*this); }
+  bool is_value() const { return boost::get<A>(this) != nullptr; }
+
+  const A& value() const { return boost::get<A>(*this); }
 
   ErrorCode error() const {
     if (!is_error()) { return ErrorCode(); }

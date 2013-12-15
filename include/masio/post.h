@@ -6,27 +6,31 @@
 namespace masio {
 
 template<class A> struct Post : public Cont<A> {
-  typedef Lambda<A>            Super;
-  typedef typename Super::Rest Rest;
-  typedef typename Super::Run  Run;
+  typedef Lambda<A>                Super;
+  typedef typename Super::Rest     Rest;
+  typedef typename Super::Run      Run;
+  typedef std::function<typename Cont<A>::Ptr ()> Handler;
 
-  Post(boost::asio::io_service& ios, Run r)
-    : _run(r)
+  Post(boost::asio::io_service& ios, const Handler& r)
+    : _handler(r)
     , _io_service(ios) {}
 
   void run(const Rest& rest) const {
     auto self = this->shared_from_this();
-    _io_service.post([=]() { capture(self); _run(rest); });
+    _io_service.post([=]() {
+        capture(self);
+        _handler()->run(rest);
+        });
   }
 
-  Run _run;
+  Handler _handler;
   boost::asio::io_service& _io_service;
 };
 
 template<class A>
 std::shared_ptr<Post<A>> post( boost::asio::io_service& ios
-                             , const typename Cont<A>::Run& run) {
-  return std::make_shared<Post<A>>(ios, run);
+                             , const typename Post<A>::Handler& handler) {
+  return std::make_shared<Post<A>>(ios, handler);
 }
 
 } // masio namespace
