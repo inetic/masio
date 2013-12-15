@@ -1,43 +1,10 @@
+#ifndef __MASIO_CONT_H__
+#define __MASIO_CONT_H__
 
-#include <boost/asio.hpp>
-#include <boost/variant.hpp>
-#include <iostream>
-#include <memory>
-
-//
-// Standard continuation signatures (r in our case is always void):
-//
-// Cont a : { (a -> r) -> r }
-// Cont a >>= (\a -> Cont b) = Cont b
-//
-// But Cont is actually a Monad transformer parametrized
-// over the Error monad. So the actual signature is:
-//
-// Cont a : { (E a -> r) -> r }
-//
+namespace masio {
 
 template<class A> void capture(const A&) {}
 template<class> struct Lambda;
-
-template<class A> struct Error
-    : public boost::variant<A, boost::system::error_code>
-{
-  typedef boost::system::error_code    ErrorCode;
-  typedef boost::variant<A, ErrorCode> Super;
-
-  Error(const A& a) : Super(a) {}
-  Error(ErrorCode e) : Super(e) {}
-
-  bool is_error() const {
-    if (const ErrorCode* pe = boost::get<ErrorCode>(this)) {
-      return *pe != ErrorCode(); // ErrorCode() means success.
-    }
-    return false;
-  }
-
-  const A&         value() const { return boost::get<A>(*this); }
-  const ErrorCode& error() const { return boost::get<ErrorCode>(*this); }
-};
 
 template<class A> struct Cont : public std::enable_shared_from_this<Cont<A>> {
   typedef std::function<void(Error<A>)>    Rest;
@@ -129,30 +96,6 @@ std::shared_ptr<Lambda<A>> fail(const boost::system::error_code& error) {
       });
 }
 
-using namespace std;
-namespace asio = boost::asio;
+} // masio namespace
 
-int main() {
-  asio::io_service ios;
-
-  Cont<float>::Ptr p = post<int>(ios, [](Cont<int>::Rest rest) {
-    rest(Error<int>(10));
-  })
-  ->bind<float>([&ios](int a) {
-    //return fail<float>(boost::asio::error::operation_aborted);
-    return post<float>(ios, [a](Cont<float>::Rest rest) {
-      rest(Error<float>(2*a + 1));
-      });
-  })
-  ->bind<float>([](float a) {
-      return success(a+2);
-  });
-
-  p->run([](Error<float> i) { cout << "final: " << i << "\n"; });
-
-  std::cout << "start\n";
-  while(ios.poll_one()) {
-    std::cout << "polled one\n";
-  }
-}
-
+#endif // ifndef __MASIO_CONT_H__

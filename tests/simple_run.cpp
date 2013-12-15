@@ -1,0 +1,154 @@
+#define BOOST_TEST_DYN_LINK
+#define BOOST_TEST_MODULE SimpleRun
+#include <boost/test/unit_test.hpp>
+
+#include <boost/asio.hpp>
+#include <masio.h>
+#include <iostream>
+
+//
+// Standard continuation signatures (r in our case is always void):
+//
+// Cont a : { (a -> r) -> r }
+// Cont a >>= (\a -> Cont b) = Cont b
+//
+// But Cont is actually a Monad transformer parametrized
+// over the Error monad. So the actual signature is:
+//
+// Cont a : { (E a -> r) -> r }
+//
+
+using namespace masio;
+using namespace std;
+namespace asio = boost::asio;
+
+//------------------------------------------------------------------------------
+BOOST_AUTO_TEST_CASE(zeroBinds) {
+  Cont<int>::Ptr p = success<int>(10);
+
+  p->run([](Error<int> i) {
+      BOOST_REQUIRE(!i.is_error());
+      BOOST_REQUIRE(i.value() == 10);
+      });
+}
+
+//------------------------------------------------------------------------------
+BOOST_AUTO_TEST_CASE(zeroBindsOnePost) {
+  asio::io_service ios;
+
+  Cont<int>::Ptr p = post<int>(ios, [](Cont<int>::Rest rest) {
+    rest(Error<int>(10));
+  });
+
+  p->run([](Error<int> i) {
+      BOOST_REQUIRE(!i.is_error());
+      BOOST_REQUIRE(i.value() == 10);
+      });
+
+  int poll_count = 0;
+
+  while(ios.poll_one()) { ++poll_count; }
+
+  BOOST_REQUIRE(poll_count == 1);
+}
+
+//------------------------------------------------------------------------------
+BOOST_AUTO_TEST_CASE(bindsAndPosts) {
+  asio::io_service ios;
+
+  Cont<int>::Ptr p = post<int>(ios, [](Cont<int>::Rest rest) {
+    rest(Error<int>(10));
+  })
+  ->bind<float>([&ios](int a) {
+    //return fail<float>(boost::asio::error::operation_aborted);
+    return post<float>(ios, [a](Cont<float>::Rest rest) {
+      rest(Error<float>(2*a + 1));
+      });
+  })
+  ->bind<int>([](float a) {
+      return success<int>(a+2);
+  });
+
+  p->run([](Error<int> i) { 
+      BOOST_REQUIRE(!i.is_error());
+      BOOST_REQUIRE(i.value() == 23);
+      });
+
+  int poll_count = 0;
+
+  while(ios.poll_one()) { ++poll_count; }
+
+  BOOST_REQUIRE(poll_count == 2);
+}
+
+//------------------------------------------------------------------------------
+// End right at the beginning.
+BOOST_AUTO_TEST_CASE(fail0) {
+  Cont<int>::Ptr p = fail<int>(asio::error::operation_aborted)
+    ->bind<int>([](int a) { return success<int>(a); });
+
+  p->run([](Error<int> i) { 
+      BOOST_REQUIRE(i.is_error());
+      BOOST_REQUIRE(i.error() == asio::error::operation_aborted);
+      });
+}
+
+//------------------------------------------------------------------------------
+// End at the middle of the computation.
+BOOST_AUTO_TEST_CASE(fail1) {
+  using asio::error::operation_aborted;
+
+  asio::io_service ios;
+
+  Cont<int>::Ptr p = post<int>(ios, [](Cont<int>::Rest rest) {
+    rest(Error<int>(10));
+  })
+  ->bind<float>([&ios](int a) {
+    return fail<float>(operation_aborted);
+  })
+  ->bind<int>([](float a) {
+      return success<int>(a+2);
+  });
+
+  p->run([](Error<int> i) { 
+      BOOST_REQUIRE(i.is_error());
+      BOOST_REQUIRE(i.error() == operation_aborted);
+      });
+
+  int poll_count = 0;
+
+  while(ios.poll_one()) { ++poll_count; }
+
+  BOOST_REQUIRE(poll_count == 1);
+}
+
+//------------------------------------------------------------------------------
+// End at the end of the computation.
+BOOST_AUTO_TEST_CASE(fail2) {
+  asio::io_service ios;
+
+  Cont<int>::Ptr p = post<int>(ios, [](Cont<int>::Rest rest) {
+    rest(Error<int>(10));
+  })
+  ->bind<float>([&ios](int a) {
+    return post<float>(ios, [a](Cont<float>::Rest rest) {
+      rest(Error<float>(2*a + 1));
+      });
+  })
+  ->bind<int>([](float a) {
+      return fail<int>(asio::error::operation_aborted);
+  });
+
+  p->run([](Error<int> i) { 
+      BOOST_REQUIRE(i.is_error());
+      BOOST_REQUIRE(i.error() == asio::error::operation_aborted);
+      });
+
+  int poll_count = 0;
+
+  while(ios.poll_one()) { ++poll_count; }
+
+  BOOST_REQUIRE(poll_count == 2);
+}
+
+//------------------------------------------------------------------------------

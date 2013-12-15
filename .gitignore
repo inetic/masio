@@ -1,3 +1,4 @@
 Session.vim
 main
 *.swp
+tests/simple_run
