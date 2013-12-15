@@ -3,6 +3,9 @@
 
 #include <masio/error.h>
 #include <masio/cont.h>
+#include <masio/lambda.h>
+#include <masio/post.h>
+#include <masio/return.h>
 
 namespace masio {
 
