@@ -7,6 +7,7 @@ namespace masio {
 
 template<class A> struct Post : public Cont<A> {
   typedef Lambda<A>                Super;
+  typedef typename Super::StatePtr StatePtr;
   typedef typename Super::Rest     Rest;
   typedef typename Super::Run      Run;
   typedef std::function<typename Cont<A>::Ptr ()> Handler;
@@ -15,11 +16,17 @@ template<class A> struct Post : public Cont<A> {
     : _handler(r)
     , _io_service(ios) {}
 
-  void run(const Rest& rest) const {
+  void run(const StatePtr& state, const Rest& rest) const {
     auto self = this->shared_from_this();
     _io_service.post([=]() {
         capture(self);
-        _handler()->run(rest);
+
+        if (state->canceled()) {
+          rest(Error<A>::make_error(boost::asio::error::operation_aborted));
+          return;
+        }
+
+        _handler()->run(state, rest);
         });
   }
 

@@ -12,7 +12,9 @@ template<class A> struct Error
   typedef boost::variant<A, ErrorCode> Super;
 
   Error(const A& a)  : Super(a) {}
-  Error(ErrorCode e) : Super(e) {}
+  Error(ErrorCode e) : Super((ErrorCode) e) {}
+
+  static Error<A> make_error(ErrorCode e) { return Error<A>(e); }
 
   bool is_error() const {
     if (const ErrorCode* pe = boost::get<ErrorCode>(this)) {

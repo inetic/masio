@@ -4,13 +4,18 @@
 namespace masio {
 
 template<class A> struct Return : public Cont<A> {
-  typedef Cont<A>              Super;
-  typedef typename Super::Rest Rest;
-  typedef typename Super::Run  Run;
+  typedef Cont<A>                  Super;
+  typedef typename Super::StatePtr StatePtr;
+  typedef typename Super::Rest     Rest;
+  typedef typename Super::Run      Run;
 
   Return(const A& a) : value(a) {}
 
-  void run(const Rest& rest) const {
+  void run(const StatePtr& state, const Rest& rest) const {
+    if (state->canceled()) {
+      rest(Error<A>::make_error(boost::asio::error::operation_aborted));
+      return;
+    }
     rest(Error<A>(value));
   }
 
@@ -25,8 +30,11 @@ template<class A> std::shared_ptr<Return<A>> success(const A& a) {
 template<class A>
 std::shared_ptr<Lambda<A>> fail(const boost::system::error_code& error) {
   using namespace std;
-  return make_shared<Lambda<A>>([error](const typename Cont<A>::Rest& rest){
-      rest(Error<A>(error));
+  typedef shared_ptr<State> StatePtr;
+
+  return make_shared<Lambda<A>>([error]( const StatePtr& state
+                                       , const typename Cont<A>::Rest& rest){
+      rest(Error<A>::make_error(error));
       });
 }
 
