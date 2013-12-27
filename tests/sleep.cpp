@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE(test_cancel_sleep) {
 
   StatePtr state = make_shared<State>();
 
-  unsigned int wait_time = 10*10000; // Ten seconds
+  unsigned int wait_time = 10*1000; // Ten seconds
 
   Cont<int>::Ptr p = post<int>(ios, []() {
     return success<int>(10);

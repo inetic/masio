@@ -5,10 +5,10 @@ LIBS      := -lboost_system -lboost_unit_test_framework
 
 .PHONY: all
 
-all: tests/simple_run tests/sleep
+all: tests/core tests/sleep
 
 run: all
-	@./tests/simple_run
+	@./tests/core
 	@./tests/sleep
 
 %: %.cpp $(INC_FILES) Makefile
