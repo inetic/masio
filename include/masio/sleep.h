@@ -28,7 +28,16 @@ struct Sleep : public masio::Cont<A> {
 
     auto timer = make_shared<deadline_timer>(_io_service, _time);
 
-    timer->async_wait([self, state, rest, timer](const error_code& error){
+    auto canceler = make_shared<State::Canceler>([timer]() {
+        timer->cancel();
+        });
+
+    state->link_canceler(*canceler);
+
+    timer->async_wait([self, state, rest, timer, canceler]
+          (const error_code& error){
+
+        canceler->unlink();
 
         if (error) {
           rest(Error<A>::make_error(error));
