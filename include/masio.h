@@ -1,6 +1,8 @@
 #ifndef __MASIO_H__
 #define __MASIO_H__
 
+#include <boost/asio.hpp>
+
 #include <masio/error.h>
 #include <masio/cont.h>
 #include <masio/lambda.h>

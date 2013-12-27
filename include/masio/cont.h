@@ -1,20 +1,11 @@
 #ifndef __MASIO_CONT_H__
 #define __MASIO_CONT_H__
 
+#include "state.h"
+
 namespace masio {
 
 template<class> struct Lambda;
-
-class State {
-public:
-  State() : _canceled(false) {}
-
-  void cancel() { _canceled = true; }
-  bool canceled() const { return _canceled; }
-
-private:
-  bool _canceled;
-};
 
 template<class A> struct Cont : public std::enable_shared_from_this<Cont<A>> {
   typedef std::shared_ptr<State>                     StatePtr;
