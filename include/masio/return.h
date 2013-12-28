@@ -12,10 +12,6 @@ template<class A> struct Return : public Cont<A> {
   Return(const A& a) : value(a) {}
 
   void run(const StatePtr& state, const Rest& rest) const {
-    if (state->canceled()) {
-      rest(typename Error<A>::Fail{boost::asio::error::operation_aborted});
-      return;
-    }
     rest(typename Error<A>::Success{value});
   }
 

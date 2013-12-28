@@ -57,10 +57,10 @@ typename Error<A>::ErrorCode Error<A>::error() const {
 template<class A>
 std::ostream& operator<<(std::ostream& os, const Error<A>& ea) {
   if (ea.is_error()) {
-    os << "(Fail " << ea.error().message() << ")";
+    return os << "(Fail " << ea.error().message() << ")";
   }
   else {
-    os << "(Success " << ea.value() << ")";
+    return os << "(Success " << ea.value() << ")";
   }
 }
 
