@@ -6,7 +6,7 @@
 namespace masio {
 
 namespace __detail {
-  template<class A> struct Success { const A value; };
+  template<class A> struct Success { A value; };
   struct Fail    { boost::system::error_code value; };
 }
 
@@ -19,6 +19,7 @@ template<class A> struct Error
   typedef boost::system::error_code     ErrorCode;
   typedef boost::variant<Success, Fail> Super;
 
+  Error() {}
   Error(const Success& a) : Super(a) {}
   Error(const Fail&    a) : Super(a) {}
 
@@ -51,6 +52,16 @@ template<class A>
 typename Error<A>::ErrorCode Error<A>::error() const {
   if (!is_error()) { return ErrorCode(); }
   return boost::get<Fail>(*this).value;
+}
+
+template<class A>
+std::ostream& operator<<(std::ostream& os, const Error<A>& ea) {
+  if (ea.is_error()) {
+    os << "(Fail " << ea.error().message() << ")";
+  }
+  else {
+    os << "(Success " << ea.value() << ")";
+  }
 }
 
 } // masio namespace
