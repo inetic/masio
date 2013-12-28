@@ -54,8 +54,11 @@ typename Error<A>::ErrorCode Error<A>::error() const {
   return boost::get<Fail>(*this).value;
 }
 
+
+} // masio namespace
+
 template<class A>
-std::ostream& operator<<(std::ostream& os, const Error<A>& ea) {
+std::ostream& operator<<(std::ostream& os, const masio::Error<A>& ea) {
   if (ea.is_error()) {
     return os << "(Fail " << ea.error().message() << ")";
   }
@@ -63,8 +66,6 @@ std::ostream& operator<<(std::ostream& os, const Error<A>& ea) {
     return os << "(Success " << ea.value() << ")";
   }
 }
-
-} // masio namespace
 
 #endif // ifndef __MASIO_ERROR_H__
 

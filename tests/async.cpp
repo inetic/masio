@@ -16,6 +16,10 @@ typedef shared_ptr<State> StatePtr;
 //------------------------------------------------------------------------------
 system_clock::time_point now() { return system_clock::now(); }
 
+std::ostream& operator<<(std::ostream& os, const system_clock::time_point& t) {
+  return os << t.time_since_epoch() / seconds(1);
+}
+
 //------------------------------------------------------------------------------
 #define REQUIRE_DURATION(duration, reference) \
   BOOST_REQUIRE_LE( abs(duration_cast<milliseconds>(duration).count() \
@@ -115,10 +119,6 @@ BOOST_AUTO_TEST_CASE(test_async_sleep) {
 
   BOOST_REQUIRE(executed);
   BOOST_REQUIRE_EQUAL(poll_count, 2);
-}
-
-std::ostream& operator<<(std::ostream& os, const system_clock::time_point& t) {
-  return os << "time";
 }
 
 //--------------------------------------------------------------------
