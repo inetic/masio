@@ -13,10 +13,10 @@ template<class A> struct Return : public Cont<A> {
 
   void run(const StatePtr& state, const Rest& rest) const {
     if (state->canceled()) {
-      rest(Error<A>::make_error(boost::asio::error::operation_aborted));
+      rest(typename Error<A>::Fail{boost::asio::error::operation_aborted});
       return;
     }
-    rest(Error<A>(value));
+    rest(typename Error<A>::Success{value});
   }
 
   A value;
@@ -34,7 +34,7 @@ std::shared_ptr<Lambda<A>> fail(const boost::system::error_code& error) {
 
   return make_shared<Lambda<A>>([error]( const StatePtr& state
                                        , const typename Cont<A>::Rest& rest){
-      rest(Error<A>::make_error(error));
+      rest(typename Error<A>::Fail{error});
       });
 }
 

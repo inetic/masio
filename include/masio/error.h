@@ -5,35 +5,55 @@
 
 namespace masio {
 
+namespace __detail {
+  template<class A> struct Success { const A value; };
+  struct Fail    { boost::system::error_code value; };
+}
+
 template<class A> struct Error
-    : public boost::variant<A, boost::system::error_code>
+    : public boost::variant<__detail::Success<A>, __detail::Fail>
 {
-  typedef boost::system::error_code    ErrorCode;
-  typedef boost::variant<A, ErrorCode> Super;
+  typedef __detail::Success<A>          Success;
+  typedef __detail::Fail                Fail;
 
-  Error(const A& a)  : Super(a) {}
-  Error(ErrorCode e) : Super((ErrorCode) e) {}
+  typedef boost::system::error_code     ErrorCode;
+  typedef boost::variant<Success, Fail> Super;
 
-  static Error<A> make_error(ErrorCode e) { return Error<A>(e); }
+  Error(const Success& a) : Super(a) {}
+  Error(const Fail&    a) : Super(a) {}
 
-  bool is_error() const {
-    if (const ErrorCode* pe = boost::get<ErrorCode>(this)) {
-      return *pe != ErrorCode(); // ErrorCode() means success.
-    }
-    return false;
-  }
+  bool is_error() const;
+  bool is_value() const;
 
-  bool is_value() const { return boost::get<A>(this) != nullptr; }
-
-  const A& value() const { return boost::get<A>(*this); }
-
-  ErrorCode error() const {
-    if (!is_error()) { return ErrorCode(); }
-    return boost::get<ErrorCode>(*this);
-  }
+  const A&  value() const;
+  ErrorCode error() const;
 };
 
+template<class A>
+bool Error<A>::is_error() const {
+  if (const Fail* pe = boost::get<Fail>(this)) {
+    return pe->value != ErrorCode(); // ErrorCode() means success.
+  }
+  return false;
 }
+
+template<class A>
+bool Error<A>::is_value() const {
+  return boost::get<Success>(this) != nullptr;
+}
+
+template<class A>
+const A& Error<A>::value() const {
+  return boost::get<Success>(*this).value;
+}
+
+template<class A>
+typename Error<A>::ErrorCode Error<A>::error() const {
+  if (!is_error()) { return ErrorCode(); }
+  return boost::get<Fail>(*this).value;
+}
+
+} // masio namespace
 
 #endif // ifndef __MASIO_ERROR_H__
 

@@ -23,8 +23,8 @@ struct Sleep : public masio::Cont<A> {
     using namespace boost::posix_time;
     using namespace boost::system;
 
-    auto self = std::static_pointer_cast<const Sleep<A>>
-                (Cont<A>::shared_from_this());
+    auto self = static_pointer_cast<const Sleep<A>>
+                  (Cont<A>::shared_from_this());
 
     auto timer = make_shared<deadline_timer>(_io_service, _time);
 
@@ -40,10 +40,10 @@ struct Sleep : public masio::Cont<A> {
         canceler->unlink();
 
         if (error) {
-          rest(Error<A>::make_error(error));
+          rest(typename Error<A>::Fail{error});
         }
         else if (state->canceled()) {
-          rest(Error<A>::make_error(boost::asio::error::operation_aborted));
+          rest(typename Error<A>::Fail{error::operation_aborted});
         }
         else {
           self->_handler()->run(state, rest);

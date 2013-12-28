@@ -30,7 +30,7 @@ template<class A> struct Cont : public std::enable_shared_from_this<Cont<A>> {
     return make_shared<Lambda<B>>(([self, f](const StatePtr& s, BRest brest) {
         if (s->canceled()) {
           using namespace boost::asio;
-          brest(Error<B>::make_error(error::operation_aborted));
+          brest(typename Error<B>::Fail{error::operation_aborted});
           return;
         }
 
@@ -39,7 +39,7 @@ template<class A> struct Cont : public std::enable_shared_from_this<Cont<A>> {
               f(ea.value())->run(s, brest);
             }
             else {
-              brest(Error<B>(ea.error()));
+              brest(typename Error<B>::Fail{ea.error()});
             }
           });
         }));

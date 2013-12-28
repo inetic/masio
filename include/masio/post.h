@@ -17,12 +17,15 @@ template<class A> struct Post : public Cont<A> {
     , _io_service(ios) {}
 
   void run(const StatePtr& state, const Rest& rest) const {
+    using namespace boost::asio::error;
+
     auto self = this->shared_from_this();
+
     _io_service.post([=]() {
         capture(self);
 
         if (state->canceled()) {
-          rest(Error<A>::make_error(boost::asio::error::operation_aborted));
+          rest(typename Error<A>::Fail{operation_aborted});
           return;
         }
 

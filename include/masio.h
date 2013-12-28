@@ -9,6 +9,7 @@
 #include <masio/post.h>
 #include <masio/return.h>
 #include <masio/sleep.h>
+#include <masio/may_fail.h>
 
 namespace masio {
 
