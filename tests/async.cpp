@@ -28,6 +28,10 @@ BOOST_AUTO_TEST_CASE(test_async) {
       const vector<Error<int>>& rs = ers.value();
 
       BOOST_REQUIRE_EQUAL(rs.size(), 2);
+
+      BOOST_REQUIRE(rs[0].is_value());
+      BOOST_REQUIRE(rs[1].is_value());
+
       BOOST_REQUIRE_EQUAL(rs[0].value(), 11);
       BOOST_REQUIRE_EQUAL(rs[1].value(), 22);
       
