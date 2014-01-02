@@ -11,7 +11,7 @@ using namespace masio;
 using namespace std;
 namespace asio = boost::asio;
 using namespace std::chrono;
-typedef shared_ptr<State> StatePtr;
+typedef shared_ptr<Canceler> CancelerPtr;
 
 //------------------------------------------------------------------------------
 system_clock::time_point now() { return system_clock::now(); }
@@ -29,7 +29,7 @@ std::ostream& operator<<(std::ostream& os, const system_clock::time_point& t) {
 BOOST_AUTO_TEST_CASE(test_async) {
   asio::io_service ios;
 
-  StatePtr state = make_shared<State>();
+  CancelerPtr canceler = make_shared<Canceler>();
 
   Cont<int>::Ptr p1 = post<int>(ios, []() { return success<int>(11); });
   Cont<int>::Ptr p2 = post<int>(ios, []() { return success<int>(22); });
@@ -38,7 +38,7 @@ BOOST_AUTO_TEST_CASE(test_async) {
 
   bool executed = false;
 
-  p->run(state, [&executed](Error<std::vector<Error<int>>> ers) {
+  p->run(canceler, [&executed](Error<std::vector<Error<int>>> ers) {
       BOOST_REQUIRE(!ers.is_error());
 
       const vector<Error<int>>& rs = ers.value();
@@ -68,7 +68,7 @@ BOOST_AUTO_TEST_CASE(test_async) {
 BOOST_AUTO_TEST_CASE(test_async_sleep) {
   asio::io_service ios;
 
-  StatePtr state = make_shared<State>();
+  CancelerPtr canceler = make_shared<Canceler>();
 
   typedef system_clock::time_point Time;
 
@@ -89,8 +89,8 @@ BOOST_AUTO_TEST_CASE(test_async_sleep) {
 
   auto start = now();
 
-  p->run(state, [&executed, start, duration0, duration1]
-                (Error<std::vector<Error<Time>>> ers) {
+  p->run(canceler, [&executed, start, duration0, duration1]
+                   (Error<std::vector<Error<Time>>> ers) {
       BOOST_REQUIRE(!ers.is_error());
 
       const vector<Error<Time>>& rs = ers.value();
@@ -125,15 +125,15 @@ BOOST_AUTO_TEST_CASE(test_async_sleep) {
 BOOST_AUTO_TEST_CASE(test_async_sleep_and_cancel) {
   asio::io_service ios;
 
-  StatePtr state = make_shared<State>();
+  CancelerPtr canceler = make_shared<Canceler>();
 
   typedef system_clock::time_point Time;
 
   unsigned int duration0 = 123;
   unsigned int duration1 = 234;
 
-  Cont<Time>::Ptr p0 = sleep<Time>(ios, duration0, [state]() {
-      state->cancel();
+  Cont<Time>::Ptr p0 = sleep<Time>(ios, duration0, [canceler]() {
+      canceler->cancel();
       return success<Time>(now());
       });
 
@@ -147,8 +147,8 @@ BOOST_AUTO_TEST_CASE(test_async_sleep_and_cancel) {
 
   auto start = now();
 
-  p->run(state, [&executed, start, duration0, duration1]
-                (Error<std::vector<Error<Time>>> ers) {
+  p->run(canceler, [&executed, start, duration0, duration1]
+                   (Error<std::vector<Error<Time>>> ers) {
       BOOST_REQUIRE(!ers.is_error());
 
       const vector<Error<Time>>& rs = ers.value();
@@ -180,24 +180,24 @@ BOOST_AUTO_TEST_CASE(test_async_sleep_and_cancel) {
 }
 
 //--------------------------------------------------------------------
-BOOST_AUTO_TEST_CASE(test_async_sleep_and_cancel_substates) {
+BOOST_AUTO_TEST_CASE(test_async_sleep_and_cancel_subcancelers) {
   asio::io_service ios;
 
-  StatePtr state    = make_shared<State>();
-  StatePtr substate = state->make_substate();
+  CancelerPtr canceler    = make_shared<Canceler>();
+  CancelerPtr p1_canceler = make_shared<Canceler>();
 
   typedef system_clock::time_point Time;
 
   unsigned int duration0 = 123;
   unsigned int duration1 = 234;
 
-  Cont<Time>::Ptr p0 = sleep<Time>(ios, duration0, [substate]() {
-      substate->cancel();
+  Cont<Time>::Ptr p0 = sleep<Time>(ios, duration0, [p1_canceler]() {
+      p1_canceler->cancel();
       return success<Time>(now());
       })
       ->bind<Time>([](Time t) { return success(t); });
 
-  Cont<Time>::Ptr p1 = with_substate<Time>( substate
+  Cont<Time>::Ptr p1 = with_canceler<Time>( p1_canceler
                                           , sleep<Time>(ios, duration1, []() {
       return success<Time>(now());
       }))
@@ -209,8 +209,8 @@ BOOST_AUTO_TEST_CASE(test_async_sleep_and_cancel_substates) {
 
   auto start = now();
 
-  p->run(state, [&executed, start, duration0, duration1]
-                (Error<std::vector<Error<Time>>> ers) {
+  p->run(canceler, [&executed, start, duration0, duration1]
+                  (Error<std::vector<Error<Time>>> ers) {
       BOOST_REQUIRE(!ers.is_error());
 
       const vector<Error<Time>>& rs = ers.value();

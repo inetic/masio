@@ -6,15 +6,15 @@
 namespace masio {
 
 template<class A> struct Lambda : public Cont<A> {
-  typedef typename Cont<A>::StatePtr StatePtr;
-  typedef typename Cont<A>::Rest     Rest;
-  typedef typename Cont<A>::Run      Run;
+  typedef typename Cont<A>::CancelerPtr CancelerPtr;
+  typedef typename Cont<A>::Rest        Rest;
+  typedef typename Cont<A>::Run         Run;
 
   Lambda() {}
   Lambda(const Run& run) : _run(run) { }
 
-  void run(const StatePtr& state, const Rest& rest) const {
-    _run(state, rest);
+  void run(const CancelerPtr& canceler, const Rest& rest) const {
+    _run(canceler, rest);
   }
 
   Run _run;

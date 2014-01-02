@@ -5,9 +5,9 @@ namespace masio {
 
 template<class A>
 struct Sleep : public masio::Cont<A> {
-  typedef typename Cont<A>::StatePtr StatePtr;
-  typedef typename Cont<A>::Rest     Rest;
-  typedef typename Cont<A>::Run      Run;
+  typedef typename Cont<A>::CancelerPtr CancelerPtr;
+  typedef typename Cont<A>::Rest        Rest;
+  typedef typename Cont<A>::Run         Run;
 
   typedef std::function<typename Cont<A>::Ptr ()> Handler;
 
@@ -17,7 +17,7 @@ struct Sleep : public masio::Cont<A> {
     , _time(boost::posix_time::milliseconds(millis))
   {}
 
-  void run(const StatePtr& state, const Rest& rest) const {
+  void run(const CancelerPtr& canceler, const Rest& rest) const {
     using namespace std;
     using namespace boost::asio;
     using namespace boost::posix_time;
@@ -28,25 +28,25 @@ struct Sleep : public masio::Cont<A> {
 
     auto timer = make_shared<deadline_timer>(_io_service, _time);
 
-    auto canceler = make_shared<State::Canceler>([timer]() {
+    auto cancel_action = make_shared<Canceler::CancelAction>([timer]() {
         timer->cancel();
         });
 
-    state->link_canceler(*canceler);
+    canceler->link_cancel_action(*cancel_action);
 
-    timer->async_wait([self, state, rest, timer, canceler]
+    timer->async_wait([self, canceler, rest, timer, cancel_action]
           (const error_code& error){
 
-        canceler->unlink();
+        cancel_action->unlink();
 
         if (error) {
           rest(typename Error<A>::Fail{error});
         }
-        else if (state->canceled()) {
+        else if (canceler->canceled()) {
           rest(typename Error<A>::Fail{error::operation_aborted});
         }
         else {
-          self->_handler()->run(state, rest);
+          self->_handler()->run(canceler, rest);
         }
         });
   }

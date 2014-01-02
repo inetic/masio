@@ -6,17 +6,17 @@ namespace masio {
 template<class A>
 class MayFail : public Cont<Error<A>> {
 public:
-  typedef Cont<Error<A>>           Super;
-  typedef typename Super::StatePtr StatePtr;
-  typedef typename Super::Rest     Rest;
-  typedef typename Super::Run      Run;
+  typedef Cont<Error<A>>              Super;
+  typedef typename Super::CancelerPtr CancelerPtr;
+  typedef typename Super::Rest        Rest;
+  typedef typename Super::Run         Run;
 
 public:
   MayFail(const std::shared_ptr<Cont<A>>& delegate)
     : _delegate(delegate)
   { }
 
-  void run(const StatePtr& s, const Rest& rest) const override {
+  void run(const CancelerPtr& s, const Rest& rest) const override {
     using namespace boost::asio;
 
     auto self = Super::shared_from_this();

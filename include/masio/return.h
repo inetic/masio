@@ -4,14 +4,14 @@
 namespace masio {
 
 template<class A> struct Return : public Cont<A> {
-  typedef Cont<A>                  Super;
-  typedef typename Super::StatePtr StatePtr;
-  typedef typename Super::Rest     Rest;
-  typedef typename Super::Run      Run;
+  typedef Cont<A>                     Super;
+  typedef typename Super::CancelerPtr CancelerPtr;
+  typedef typename Super::Rest        Rest;
+  typedef typename Super::Run         Run;
 
   Return(const A& a) : value(a) {}
 
-  void run(const StatePtr& state, const Rest& rest) const {
+  void run(const CancelerPtr& canceler, const Rest& rest) const {
     rest(typename Error<A>::Success{value});
   }
 
@@ -26,9 +26,9 @@ template<class A> std::shared_ptr<Return<A>> success(const A& a) {
 template<class A>
 std::shared_ptr<Lambda<A>> fail(const boost::system::error_code& error) {
   using namespace std;
-  typedef shared_ptr<State> StatePtr;
+  typedef shared_ptr<Canceler> CancelerPtr;
 
-  return make_shared<Lambda<A>>([error]( const StatePtr& state
+  return make_shared<Lambda<A>>([error]( const CancelerPtr& canceler
                                        , const typename Cont<A>::Rest& rest){
       rest(typename Error<A>::Fail{error});
       });

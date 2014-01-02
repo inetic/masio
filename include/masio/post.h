@@ -6,17 +6,17 @@
 namespace masio {
 
 template<class A> struct Post : public Cont<A> {
-  typedef Lambda<A>                Super;
-  typedef typename Super::StatePtr StatePtr;
-  typedef typename Super::Rest     Rest;
-  typedef typename Super::Run      Run;
+  typedef Lambda<A>                   Super;
+  typedef typename Super::CancelerPtr CancelerPtr;
+  typedef typename Super::Rest        Rest;
+  typedef typename Super::Run         Run;
   typedef std::function<typename Cont<A>::Ptr ()> Handler;
 
   Post(boost::asio::io_service& ios, const Handler& r)
     : _handler(r)
     , _io_service(ios) {}
 
-  void run(const StatePtr& state, const Rest& rest) const {
+  void run(const CancelerPtr& canceler, const Rest& rest) const {
     using namespace boost::asio::error;
 
     auto self = this->shared_from_this();
@@ -24,12 +24,12 @@ template<class A> struct Post : public Cont<A> {
     _io_service.post([=]() {
         capture(self);
 
-        if (state->canceled()) {
+        if (canceler->canceled()) {
           rest(typename Error<A>::Fail{operation_aborted});
           return;
         }
 
-        _handler()->run(state, rest);
+        _handler()->run(canceler, rest);
         });
   }
 

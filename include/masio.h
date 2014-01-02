@@ -11,7 +11,7 @@
 #include <masio/sleep.h>
 #include <masio/may_fail.h>
 #include <masio/async.h>
-#include <masio/with_substate.h>
+#include <masio/with_canceler.h>
 
 namespace masio {
 

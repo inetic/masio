@@ -9,17 +9,17 @@
 using namespace masio;
 using namespace std;
 namespace asio = boost::asio;
-typedef shared_ptr<State> StatePtr;
+typedef shared_ptr<Canceler> CancelerPtr;
 
 //------------------------------------------------------------------------------
 BOOST_AUTO_TEST_CASE(zero_binds) {
-  StatePtr state = make_shared<State>();
+  CancelerPtr canceler = make_shared<Canceler>();
 
   Cont<int>::Ptr p = success<int>(10);
 
   bool executed = false;
 
-  p->run(state, [&executed](Error<int> i) {
+  p->run(canceler, [&executed](Error<int> i) {
       BOOST_REQUIRE(!i.is_error());
       BOOST_REQUIRE(i.value() == 10);
       executed = true;
@@ -32,13 +32,13 @@ BOOST_AUTO_TEST_CASE(zero_binds) {
 BOOST_AUTO_TEST_CASE(zero_binds_one_post) {
   asio::io_service ios;
 
-  StatePtr state = make_shared<State>();
+  CancelerPtr canceler = make_shared<Canceler>();
 
   Cont<int>::Ptr p = post<int>(ios, []() {
     return success<int>(10);
   });
 
-  p->run(state, [](Error<int> i) {
+  p->run(canceler, [](Error<int> i) {
       BOOST_REQUIRE(!i.is_error());
       BOOST_REQUIRE(i.value() == 10);
       });
@@ -54,7 +54,7 @@ BOOST_AUTO_TEST_CASE(zero_binds_one_post) {
 BOOST_AUTO_TEST_CASE(binds_and_posts) {
   asio::io_service ios;
 
-  StatePtr state = make_shared<State>();
+  CancelerPtr canceler = make_shared<Canceler>();
 
   Cont<int>::Ptr p = post<int>(ios, []() {
     return success<int>(10);
@@ -68,7 +68,7 @@ BOOST_AUTO_TEST_CASE(binds_and_posts) {
       return success<int>(a+2);
   });
 
-  p->run(state, [](Error<int> i) {
+  p->run(canceler, [](Error<int> i) {
       BOOST_REQUIRE(!i.is_error());
       BOOST_REQUIRE(i.value() == 23);
       });
@@ -85,14 +85,14 @@ BOOST_AUTO_TEST_CASE(binds_and_posts) {
 //------------------------------------------------------------------------------
 // Fail right at the beginning.
 BOOST_AUTO_TEST_CASE(fail0) {
-  StatePtr state = make_shared<State>();
+  CancelerPtr canceler = make_shared<Canceler>();
 
   Cont<int>::Ptr p = fail<int>(asio::error::operation_aborted)
     ->bind<int>([](int a) { return success<int>(a); });
 
   bool executed = false;
 
-  p->run(state, [&executed](Error<int> i) {
+  p->run(canceler, [&executed](Error<int> i) {
       BOOST_REQUIRE(i.is_error());
       BOOST_REQUIRE(i.error() == asio::error::operation_aborted);
       executed = true;
@@ -108,7 +108,7 @@ BOOST_AUTO_TEST_CASE(fail1) {
 
   asio::io_service ios;
 
-  StatePtr state = make_shared<State>();
+  CancelerPtr canceler = make_shared<Canceler>();
 
   Cont<int>::Ptr p = post<int>(ios, []() {
     return success<int>(10);
@@ -120,7 +120,7 @@ BOOST_AUTO_TEST_CASE(fail1) {
       return success<int>(a+2);
   });
 
-  p->run(state, [](Error<int> i) {
+  p->run(canceler, [](Error<int> i) {
       BOOST_REQUIRE(i.is_error());
       BOOST_REQUIRE(i.error() == operation_aborted);
       });
@@ -137,7 +137,7 @@ BOOST_AUTO_TEST_CASE(fail1) {
 BOOST_AUTO_TEST_CASE(fail2) {
   asio::io_service ios;
 
-  StatePtr state = make_shared<State>();
+  CancelerPtr canceler = make_shared<Canceler>();
 
   Cont<int>::Ptr p = post<int>(ios, []() {
     return success<int>(10);
@@ -151,7 +151,7 @@ BOOST_AUTO_TEST_CASE(fail2) {
       return fail<int>(asio::error::operation_aborted);
   });
 
-  p->run(state, [](Error<int> i) {
+  p->run(canceler, [](Error<int> i) {
       BOOST_REQUIRE(i.is_error());
       BOOST_REQUIRE(i.error() == asio::error::operation_aborted);
       });
@@ -169,7 +169,7 @@ BOOST_AUTO_TEST_CASE(fail2) {
 BOOST_AUTO_TEST_CASE(canceling) {
   asio::io_service ios;
 
-  StatePtr state = make_shared<State>();
+  CancelerPtr canceler = make_shared<Canceler>();
 
   bool first_executed  = false;
   bool second_executed = false;
@@ -187,7 +187,7 @@ BOOST_AUTO_TEST_CASE(canceling) {
 
   bool executed = false;
 
-  p->run(state, [&executed](Error<float> i) {
+  p->run(canceler, [&executed](Error<float> i) {
       executed = true;
       BOOST_REQUIRE(i.is_error());
       });
@@ -195,7 +195,7 @@ BOOST_AUTO_TEST_CASE(canceling) {
   int poll_count = 0;
 
   while(ios.poll_one()) {
-    state->cancel();
+    canceler->cancel();
     ++poll_count;
   }
 
