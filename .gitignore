@@ -3,4 +3,4 @@ main
 *.swp
 tests/core
 tests/sleep
-tests/async
+tests/all

@@ -26,7 +26,7 @@ std::ostream& operator<<(std::ostream& os, const system_clock::time_point& t) {
                         - reference)\
                   , 1);
 //--------------------------------------------------------------------
-BOOST_AUTO_TEST_CASE(test_async) {
+BOOST_AUTO_TEST_CASE(test_all) {
   asio::io_service ios;
 
   CancelerPtr canceler = make_shared<Canceler>();
@@ -34,7 +34,7 @@ BOOST_AUTO_TEST_CASE(test_async) {
   Cont<int>::Ptr p1 = post<int>(ios, []() { return success<int>(11); });
   Cont<int>::Ptr p2 = post<int>(ios, []() { return success<int>(22); });
 
-  Async<int>::Ptr p = async<int>(p1, p2);
+  All<int>::Ptr p = all<int>(p1, p2);
 
   bool executed = false;
 
@@ -65,7 +65,7 @@ BOOST_AUTO_TEST_CASE(test_async) {
 }
 
 //--------------------------------------------------------------------
-BOOST_AUTO_TEST_CASE(test_async_sleep) {
+BOOST_AUTO_TEST_CASE(test_all_sleep) {
   asio::io_service ios;
 
   CancelerPtr canceler = make_shared<Canceler>();
@@ -83,7 +83,7 @@ BOOST_AUTO_TEST_CASE(test_async_sleep) {
       return success<Time>(now());
       });
 
-  Async<Time>::Ptr p = async<Time>(p0, p1);
+  All<Time>::Ptr p = all<Time>(p0, p1);
 
   bool executed = false;
 
@@ -122,7 +122,7 @@ BOOST_AUTO_TEST_CASE(test_async_sleep) {
 }
 
 //--------------------------------------------------------------------
-BOOST_AUTO_TEST_CASE(test_async_sleep_and_cancel) {
+BOOST_AUTO_TEST_CASE(test_all_sleep_and_cancel) {
   asio::io_service ios;
 
   CancelerPtr canceler = make_shared<Canceler>();
@@ -141,7 +141,7 @@ BOOST_AUTO_TEST_CASE(test_async_sleep_and_cancel) {
       return success<Time>(now());
       });
 
-  Async<Time>::Ptr p = async<Time>(p0, p1);
+  All<Time>::Ptr p = all<Time>(p0, p1);
 
   bool executed = false;
 
@@ -180,7 +180,7 @@ BOOST_AUTO_TEST_CASE(test_async_sleep_and_cancel) {
 }
 
 //--------------------------------------------------------------------
-BOOST_AUTO_TEST_CASE(test_async_sleep_and_cancel_subcancelers) {
+BOOST_AUTO_TEST_CASE(test_all_sleep_and_cancel_subcancelers) {
   asio::io_service ios;
 
   CancelerPtr canceler    = make_shared<Canceler>();
@@ -203,7 +203,7 @@ BOOST_AUTO_TEST_CASE(test_async_sleep_and_cancel_subcancelers) {
       }))
       ->bind<Time>([](Time t) { return success(t); });
 
-  Async<Time>::Ptr p = async<Time>(p0, p1);
+  All<Time>::Ptr p = all<Time>(p0, p1);
 
   bool executed = false;
 

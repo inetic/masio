@@ -1,9 +1,9 @@
-#ifndef __MASIO_ASYNC_H__
-#define __MASIO_ASYNC_H__
+#ifndef __MASIO_ALL_H__
+#define __MASIO_ALL_H__
 
 namespace masio {
 
-template<class A> class Async : public Cont<std::vector<Error<A>>> {
+template<class A> class All : public Cont<std::vector<Error<A>>> {
 public:
   typedef std::vector<Error<A>>       Result;
   typedef Cont<Result>                Super;
@@ -15,7 +15,7 @@ public:
   typedef typename Cont<A>::Ptr    SubPtr;
 
 public:
-  Async(const SubPtr& c1, const SubPtr& c2)
+  All(const SubPtr& c1, const SubPtr& c2)
     : _conts{c1, c2}
   {}
 
@@ -47,12 +47,12 @@ private:
 };
 
 template<class A>
-typename Async<A>::Ptr async( const typename Cont<A>::Ptr& a
+typename All<A>::Ptr all( const typename Cont<A>::Ptr& a
                             , const typename Cont<A>::Ptr& b) {
-  return std::make_shared<Async<A>>(a, b);
+  return std::make_shared<All<A>>(a, b);
 }
 
 } // masio namespace
 
-#endif // ifndef __MASIO_ASYNC_H__
+#endif // ifndef __MASIO_ALL_H__
 
