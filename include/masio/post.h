@@ -5,12 +5,12 @@
 
 namespace masio {
 
-template<class A> struct Post : public Cont<A> {
+template<class A> struct Post : public Task<A> {
   typedef Lambda<A>                   Super;
   typedef typename Super::CancelerPtr CancelerPtr;
   typedef typename Super::Rest        Rest;
   typedef typename Super::Run         Run;
-  typedef std::function<typename Cont<A>::Ptr ()> Handler;
+  typedef std::function<typename Task<A>::Ptr ()> Handler;
 
   Post(boost::asio::io_service& ios, const Handler& r)
     : _handler(r)

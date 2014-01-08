@@ -15,7 +15,7 @@ typedef shared_ptr<Canceler> CancelerPtr;
 BOOST_AUTO_TEST_CASE(zero_binds) {
   CancelerPtr canceler = make_shared<Canceler>();
 
-  Cont<int>::Ptr p = success<int>(10);
+  Task<int>::Ptr p = success<int>(10);
 
   bool executed = false;
 
@@ -34,7 +34,7 @@ BOOST_AUTO_TEST_CASE(zero_binds_one_post) {
 
   CancelerPtr canceler = make_shared<Canceler>();
 
-  Cont<int>::Ptr p = post<int>(ios, []() {
+  Task<int>::Ptr p = post<int>(ios, []() {
     return success<int>(10);
   });
 
@@ -56,7 +56,7 @@ BOOST_AUTO_TEST_CASE(binds_and_posts) {
 
   CancelerPtr canceler = make_shared<Canceler>();
 
-  Cont<int>::Ptr p = post<int>(ios, []() {
+  Task<int>::Ptr p = post<int>(ios, []() {
     return success<int>(10);
   })
   ->bind<float>([&ios](int a) {
@@ -87,7 +87,7 @@ BOOST_AUTO_TEST_CASE(binds_and_posts) {
 BOOST_AUTO_TEST_CASE(fail0) {
   CancelerPtr canceler = make_shared<Canceler>();
 
-  Cont<int>::Ptr p = fail<int>(asio::error::operation_aborted)
+  Task<int>::Ptr p = fail<int>(asio::error::operation_aborted)
     ->bind<int>([](int a) { return success<int>(a); });
 
   bool executed = false;
@@ -110,7 +110,7 @@ BOOST_AUTO_TEST_CASE(fail1) {
 
   CancelerPtr canceler = make_shared<Canceler>();
 
-  Cont<int>::Ptr p = post<int>(ios, []() {
+  Task<int>::Ptr p = post<int>(ios, []() {
     return success<int>(10);
   })
   ->bind<float>([&ios](int a) {
@@ -139,7 +139,7 @@ BOOST_AUTO_TEST_CASE(fail2) {
 
   CancelerPtr canceler = make_shared<Canceler>();
 
-  Cont<int>::Ptr p = post<int>(ios, []() {
+  Task<int>::Ptr p = post<int>(ios, []() {
     return success<int>(10);
   })
   ->bind<float>([&ios](int a) {
@@ -174,7 +174,7 @@ BOOST_AUTO_TEST_CASE(canceling) {
   bool first_executed  = false;
   bool second_executed = false;
 
-  Cont<float>::Ptr p = post<int>(ios, [&first_executed]() {
+  Task<float>::Ptr p = post<int>(ios, [&first_executed]() {
     first_executed = true;
     return success<int>(10);
   })

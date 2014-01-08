@@ -3,9 +3,9 @@
 
 namespace masio {
 
-template<class A> class WithCanceler : public Cont<A> {
+template<class A> class WithCanceler : public Task<A> {
 public:
-  typedef Cont<A>                     Super;
+  typedef Task<A>                     Super;
   typedef typename Super::CancelerPtr CancelerPtr;
   typedef typename Super::Rest        Rest;
   typedef typename Super::Run         Run;
@@ -31,8 +31,8 @@ private:
 
 template<class A>
 typename WithCanceler<A>::Ptr
-with_canceler( const typename Cont<A>::CancelerPtr& canceler
-             , const typename Cont<A>::Ptr&      delegate) {
+with_canceler( const typename Task<A>::CancelerPtr& canceler
+             , const typename Task<A>::Ptr&      delegate) {
   return std::make_shared<WithCanceler<A>>(canceler, delegate);
 }
 

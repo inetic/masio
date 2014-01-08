@@ -3,8 +3,8 @@
 
 namespace masio {
 
-template<class A> struct Return : public Cont<A> {
-  typedef Cont<A>                     Super;
+template<class A> struct Return : public Task<A> {
+  typedef Task<A>                     Super;
   typedef typename Super::CancelerPtr CancelerPtr;
   typedef typename Super::Rest        Rest;
   typedef typename Super::Run         Run;
@@ -29,7 +29,7 @@ std::shared_ptr<Lambda<A>> fail(const boost::system::error_code& error) {
   typedef shared_ptr<Canceler> CancelerPtr;
 
   return make_shared<Lambda<A>>([error]( const CancelerPtr& canceler
-                                       , const typename Cont<A>::Rest& rest){
+                                       , const typename Task<A>::Rest& rest){
       rest(typename Error<A>::Fail{error});
       });
 }

@@ -4,12 +4,12 @@
 namespace masio {
 
 template<class A>
-struct Sleep : public masio::Cont<A> {
-  typedef typename Cont<A>::CancelerPtr CancelerPtr;
-  typedef typename Cont<A>::Rest        Rest;
-  typedef typename Cont<A>::Run         Run;
+struct Sleep : public masio::Task<A> {
+  typedef typename Task<A>::CancelerPtr CancelerPtr;
+  typedef typename Task<A>::Rest        Rest;
+  typedef typename Task<A>::Run         Run;
 
-  typedef std::function<typename Cont<A>::Ptr ()> Handler;
+  typedef std::function<typename Task<A>::Ptr ()> Handler;
 
   Sleep(boost::asio::io_service& ios, unsigned int millis, const Handler& r)
     : _handler(r)
@@ -24,7 +24,7 @@ struct Sleep : public masio::Cont<A> {
     using namespace boost::system;
 
     auto self = static_pointer_cast<const Sleep<A>>
-                  (Cont<A>::shared_from_this());
+                  (Task<A>::shared_from_this());
 
     auto timer = make_shared<deadline_timer>(_io_service, _time);
 

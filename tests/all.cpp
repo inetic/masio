@@ -31,8 +31,8 @@ BOOST_AUTO_TEST_CASE(test_all) {
 
   CancelerPtr canceler = make_shared<Canceler>();
 
-  Cont<int>::Ptr p1 = post<int>(ios, []() { return success<int>(11); });
-  Cont<int>::Ptr p2 = post<int>(ios, []() { return success<int>(22); });
+  Task<int>::Ptr p1 = post<int>(ios, []() { return success<int>(11); });
+  Task<int>::Ptr p2 = post<int>(ios, []() { return success<int>(22); });
 
   All<int>::Ptr p = all<int>(p1, p2);
 
@@ -75,11 +75,11 @@ BOOST_AUTO_TEST_CASE(test_all_sleep) {
   unsigned int duration0 = 123;
   unsigned int duration1 = 234;
 
-  Cont<Time>::Ptr p0 = sleep<Time>(ios, duration0, []() {
+  Task<Time>::Ptr p0 = sleep<Time>(ios, duration0, []() {
       return success<Time>(now());
       });
 
-  Cont<Time>::Ptr p1 = sleep<Time>(ios, duration1, []() {
+  Task<Time>::Ptr p1 = sleep<Time>(ios, duration1, []() {
       return success<Time>(now());
       });
 
@@ -132,12 +132,12 @@ BOOST_AUTO_TEST_CASE(test_all_sleep_and_cancel) {
   unsigned int duration0 = 123;
   unsigned int duration1 = 234;
 
-  Cont<Time>::Ptr p0 = sleep<Time>(ios, duration0, [canceler]() {
+  Task<Time>::Ptr p0 = sleep<Time>(ios, duration0, [canceler]() {
       canceler->cancel();
       return success<Time>(now());
       });
 
-  Cont<Time>::Ptr p1 = sleep<Time>(ios, duration1, []() {
+  Task<Time>::Ptr p1 = sleep<Time>(ios, duration1, []() {
       return success<Time>(now());
       });
 
@@ -191,13 +191,13 @@ BOOST_AUTO_TEST_CASE(test_all_sleep_and_cancel_subcancelers) {
   unsigned int duration0 = 123;
   unsigned int duration1 = 234;
 
-  Cont<Time>::Ptr p0 = sleep<Time>(ios, duration0, [p1_canceler]() {
+  Task<Time>::Ptr p0 = sleep<Time>(ios, duration0, [p1_canceler]() {
       p1_canceler->cancel();
       return success<Time>(now());
       })
       ->bind<Time>([](Time t) { return success(t); });
 
-  Cont<Time>::Ptr p1 = with_canceler<Time>( p1_canceler
+  Task<Time>::Ptr p1 = with_canceler<Time>( p1_canceler
                                           , sleep<Time>(ios, duration1, []() {
       return success<Time>(now());
       }))

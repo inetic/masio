@@ -3,20 +3,20 @@
 
 namespace masio {
 
-template<class A> class All : public Cont<std::vector<Error<A>>> {
+template<class A> class All : public Task<std::vector<Error<A>>> {
 public:
   typedef std::vector<Error<A>>       Result;
-  typedef Cont<Result>                Super;
+  typedef Task<Result>                Super;
   typedef typename Super::CancelerPtr CancelerPtr;
   typedef typename Super::Rest        Rest;
   typedef typename Super::Run         Run;
   typedef typename Super::Ptr         Ptr;
 
-  typedef typename Cont<A>::Ptr    SubPtr;
+  typedef typename Task<A>::Ptr    SubPtr;
 
 public:
   All(const SubPtr& c1, const SubPtr& c2)
-    : _conts{c1, c2}
+    : _tasks{c1, c2}
   {}
 
   void run(const CancelerPtr& canceler, const Rest& rest) const override {
@@ -24,13 +24,13 @@ public:
 
     auto self      = Super::shared_from_this();
 
-    auto remaining = make_shared<size_t>(_conts.size());
+    auto remaining = make_shared<size_t>(_tasks.size());
     auto results   = make_shared<Result>(*remaining);
 
-    auto ci = _conts.begin();
+    auto ci = _tasks.begin();
     auto ri = results->begin();
 
-    for (; ci != _conts.end(); ++ci, ++ri) {
+    for (; ci != _tasks.end(); ++ci, ++ri) {
       (*ci)->run(canceler, [self, remaining, results, ri, rest]
                            (const Error<A> e) {
           *ri = e;
@@ -43,12 +43,12 @@ public:
   }
 
 private:
-  std::list<SubPtr> _conts;
+  std::list<SubPtr> _tasks;
 };
 
 template<class A>
-typename All<A>::Ptr all( const typename Cont<A>::Ptr& a
-                            , const typename Cont<A>::Ptr& b) {
+typename All<A>::Ptr all( const typename Task<A>::Ptr& a
+                        , const typename Task<A>::Ptr& b) {
   return std::make_shared<All<A>>(a, b);
 }
 

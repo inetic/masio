@@ -4,15 +4,15 @@
 namespace masio {
 
 template<class A>
-class MayFail : public Cont<Error<A>> {
+class MayFail : public Task<Error<A>> {
 public:
-  typedef Cont<Error<A>>              Super;
+  typedef Task<Error<A>>              Super;
   typedef typename Super::CancelerPtr CancelerPtr;
   typedef typename Super::Rest        Rest;
   typedef typename Super::Run         Run;
 
 public:
-  MayFail(const std::shared_ptr<Cont<A>>& delegate)
+  MayFail(const std::shared_ptr<Task<A>>& delegate)
     : _delegate(delegate)
   { }
 
@@ -35,11 +35,11 @@ public:
   }
 
 private:
-  std::shared_ptr<Cont<A>> _delegate;
+  std::shared_ptr<Task<A>> _delegate;
 };
 
 template<class A> std::shared_ptr<MayFail<A>>
-may_fail(const std::shared_ptr<Cont<A>>& delegate) {
+may_fail(const std::shared_ptr<Task<A>>& delegate) {
   return std::make_shared<MayFail<A>>(delegate);
 }
 

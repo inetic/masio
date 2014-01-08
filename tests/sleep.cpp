@@ -28,7 +28,7 @@ BOOST_AUTO_TEST_CASE(test_sleep) {
 
   CancelerPtr canceler = make_shared<Canceler>();
 
-  Cont<int>::Ptr p = post<int>(ios, []() {
+  Task<int>::Ptr p = post<int>(ios, []() {
     return success<int>(10);
   })
   ->bind<float>([&ios, wait_duration](int a) {
@@ -66,7 +66,7 @@ BOOST_AUTO_TEST_CASE(test_cancel_sleep) {
 
   unsigned int wait_duration = 10*1000; // Ten seconds
 
-  Cont<int>::Ptr p = post<int>(ios, []() {
+  Task<int>::Ptr p = post<int>(ios, []() {
     return success<int>(10);
   })
   ->bind<float>([&ios, wait_duration](int a) {
@@ -105,7 +105,7 @@ BOOST_AUTO_TEST_CASE(test_sleep_and_may_fail) {
 
   unsigned int wait_duration = 100; // Milliseconds
 
-  Cont<Error<int>>::Ptr p = post<int>(ios, []() {
+  Task<Error<int>>::Ptr p = post<int>(ios, []() {
     return success<int>(10);
   })
   ->bind<Error<int>>([&ios, wait_duration](int a) {
@@ -140,7 +140,7 @@ BOOST_AUTO_TEST_CASE(test_cancel_sleep_and_may_fail) {
 
   unsigned int wait_duration = 10*1000; // Ten seconds
 
-  Cont<Error<int>>::Ptr p = post<int>(ios, []() {
+  Task<Error<int>>::Ptr p = post<int>(ios, []() {
     return success<int>(10);
   })
   ->bind<Error<int>>([&ios, wait_duration](int a) {

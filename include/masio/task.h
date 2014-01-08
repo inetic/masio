@@ -1,5 +1,5 @@
-#ifndef __MASIO_CONT_H__
-#define __MASIO_CONT_H__
+#ifndef __MASIO_TASK_H__
+#define __MASIO_TASK_H__
 
 #include "canceler.h"
 
@@ -7,11 +7,11 @@ namespace masio {
 
 template<class> struct Lambda;
 
-template<class A> struct Cont : public std::enable_shared_from_this<Cont<A>> {
+template<class A> struct Task : public std::enable_shared_from_this<Task<A>> {
   typedef std::shared_ptr<Canceler>                     CancelerPtr;
   typedef std::function<void(Error<A>)>                 Rest;
   typedef std::function<void(const CancelerPtr&, Rest)> Run;
-  typedef std::shared_ptr<Cont<A>>                      Ptr;
+  typedef std::shared_ptr<Task<A>>                      Ptr;
 
   // [s -> (Ea -> r) -> r]
   virtual void run(const CancelerPtr& s, const Rest& rest) const = 0;
@@ -20,9 +20,9 @@ template<class A> struct Cont : public std::enable_shared_from_this<Cont<A>> {
   // a -> [s -> (Eb -> r) -> r] ->
   // [s -> (Eb -> r) -> r]
   template<class B>
-  typename Cont<B>::Ptr bind(std::function<typename Cont<B>::Ptr(const A&)> f) {
+  typename Task<B>::Ptr bind(std::function<typename Task<B>::Ptr(const A&)> f) {
     using namespace std;
-    typedef typename Cont<B>::Rest BRest;
+    typedef typename Task<B>::Rest BRest;
 
     auto self = this->shared_from_this();
 
@@ -47,4 +47,4 @@ template<class A> struct Cont : public std::enable_shared_from_this<Cont<A>> {
 
 } // masio namespace
 
-#endif // ifndef __MASIO_CONT_H__
+#endif // ifndef __MASIO_TASK_H__
