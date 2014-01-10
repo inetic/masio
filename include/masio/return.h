@@ -3,14 +3,14 @@
 
 namespace masio {
 
-template<class A> struct Return : public Task<A> {
-  typedef Task<A>                     Super;
-  typedef typename Super::CancelerPtr CancelerPtr;
-  typedef typename Super::Rest        Rest;
-  typedef typename Super::Run         Run;
+template<class A> struct Return {
+  typedef std::shared_ptr<Canceler>   CancelerPtr;
+
+  using value_type = A;
 
   Return(const A& a) : value(a) {}
 
+  template<typename Rest>
   void run(const CancelerPtr& canceler, const Rest& rest) const {
     rest(typename Error<A>::Success{value});
   }
@@ -18,20 +18,8 @@ template<class A> struct Return : public Task<A> {
   A value;
 };
 
-template<class A> std::shared_ptr<Return<A>> success(const A& a) {
-  using namespace std;
-  return make_shared<Return<A>>(a);
-}
-
-template<class A>
-std::shared_ptr<Lambda<A>> fail(const boost::system::error_code& error) {
-  using namespace std;
-  typedef shared_ptr<Canceler> CancelerPtr;
-
-  return make_shared<Lambda<A>>([error]( const CancelerPtr& canceler
-                                       , const typename Task<A>::Rest& rest){
-      rest(typename Error<A>::Fail{error});
-      });
+template<class A> Return<A> success(const A& a) {
+  return Return<A>(a);
 }
 
 } // masio namespace

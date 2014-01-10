@@ -15,15 +15,88 @@ typedef shared_ptr<Canceler> CancelerPtr;
 BOOST_AUTO_TEST_CASE(zero_binds) {
   CancelerPtr canceler = make_shared<Canceler>();
 
-  Task<int>::Ptr p = success<int>(10);
+  auto p = success<int>(10);
 
   bool executed = false;
 
-  p->run(canceler, [&executed](Error<int> i) {
+  p.run(canceler, [&executed](Error<int> i) {
+     BOOST_REQUIRE(!i.is_error());
+     BOOST_REQUIRE_EQUAL(i.value(), 10);
+     executed = true;
+     });
+
+  BOOST_CHECK(executed);
+}
+
+//------------------------------------------------------------------------------
+BOOST_AUTO_TEST_CASE(one_bind) {
+  CancelerPtr canceler = make_shared<Canceler>();
+
+  auto p1 = success<int>(10);
+  auto p2 = p1 >= [](int i) { return success(i+1); };
+
+  bool executed = false;
+
+  p2.run(canceler, [&executed](Error<int> i) {
       BOOST_REQUIRE(!i.is_error());
-      BOOST_REQUIRE(i.value() == 10);
+      BOOST_REQUIRE_EQUAL(i.value(), 11);
       executed = true;
       });
+
+  BOOST_CHECK(executed);
+}
+
+//------------------------------------------------------------------------------
+BOOST_AUTO_TEST_CASE(one_bind_one_var) {
+  CancelerPtr canceler = make_shared<Canceler>();
+
+  auto p = success(10) >= [](int i) { return success(i+1); };
+
+  bool executed = false;
+
+  p.run(canceler, [&executed](Error<int> i) {
+     BOOST_REQUIRE(!i.is_error());
+     BOOST_REQUIRE_EQUAL(i.value(), 11);
+     executed = true;
+     });
+
+  BOOST_CHECK(executed);
+}
+
+//------------------------------------------------------------------------------
+BOOST_AUTO_TEST_CASE(two_binds) {
+  CancelerPtr canceler = make_shared<Canceler>();
+
+  auto p1 = success<int>(10);
+  auto p2 = p1 >= [](int i) { return success(i+1); };
+  auto p3 = p2 >= [](int i) { return success(i+1); };
+
+  bool executed = false;
+
+  p3.run(canceler, [&executed](Error<int> i) {
+      BOOST_REQUIRE(!i.is_error());
+      BOOST_REQUIRE_EQUAL(i.value(), 12);
+      executed = true;
+      });
+
+  BOOST_CHECK(executed);
+}
+
+//------------------------------------------------------------------------------
+BOOST_AUTO_TEST_CASE(two_binds_one_var) {
+  CancelerPtr canceler = make_shared<Canceler>();
+
+  auto p = success<int>(10) >= [](int i)
+           { return success(i+1); } >= [](int i)
+           { return success(i+1); };
+
+  bool executed = false;
+
+  p.run(canceler, [&executed](Error<int> i) {
+     BOOST_REQUIRE(!i.is_error());
+     BOOST_REQUIRE_EQUAL(i.value(), 12);
+     executed = true;
+     });
 
   BOOST_CHECK(executed);
 }
@@ -34,14 +107,14 @@ BOOST_AUTO_TEST_CASE(zero_binds_one_post) {
 
   CancelerPtr canceler = make_shared<Canceler>();
 
-  Task<int>::Ptr p = post<int>(ios, []() {
-    return success<int>(10);
+  auto p = post(ios, []() {
+    return success(10);
   });
 
-  p->run(canceler, [](Error<int> i) {
-      BOOST_REQUIRE(!i.is_error());
-      BOOST_REQUIRE(i.value() == 10);
-      });
+  p.run(canceler, [](Error<int> i) {
+     BOOST_REQUIRE(!i.is_error());
+     BOOST_REQUIRE(i.value() == 10);
+     });
 
   int poll_count = 0;
 
@@ -56,22 +129,20 @@ BOOST_AUTO_TEST_CASE(binds_and_posts) {
 
   CancelerPtr canceler = make_shared<Canceler>();
 
-  Task<int>::Ptr p = post<int>(ios, []() {
-    return success<int>(10);
+  auto p = post(ios, []() {
+    return success(10);
   })
-  ->bind<float>([&ios](int a) {
-    return post<float>(ios, [a]() {
-      return success<float>(2*a + 1);
-      });
-  })
-  ->bind<int>([](float a) {
+  >= [&ios](int a) {
+    return post(ios, [a]() { return success(2*a + 1); });
+  }
+  >= [](float a) {
       return success<int>(a+2);
-  });
+  };
 
-  p->run(canceler, [](Error<int> i) {
-      BOOST_REQUIRE(!i.is_error());
-      BOOST_REQUIRE(i.value() == 23);
-      });
+  p.run(canceler, [](Error<int> i) {
+     BOOST_REQUIRE(!i.is_error());
+     BOOST_REQUIRE(i.value() == 23);
+     });
 
   int poll_count = 0;
 
@@ -87,16 +158,16 @@ BOOST_AUTO_TEST_CASE(binds_and_posts) {
 BOOST_AUTO_TEST_CASE(fail0) {
   CancelerPtr canceler = make_shared<Canceler>();
 
-  Task<int>::Ptr p = fail<int>(asio::error::operation_aborted)
-    ->bind<int>([](int a) { return success<int>(a); });
+  auto p = fail<int>(asio::error::operation_aborted)
+        >= [](int a) { return success<int>(a); };
 
   bool executed = false;
 
-  p->run(canceler, [&executed](Error<int> i) {
-      BOOST_REQUIRE(i.is_error());
-      BOOST_REQUIRE(i.error() == asio::error::operation_aborted);
-      executed = true;
-      });
+  p.run(canceler, [&executed](Error<int> i) {
+     BOOST_REQUIRE(i.is_error());
+     BOOST_REQUIRE(i.error() == asio::error::operation_aborted);
+     executed = true;
+     });
 
   BOOST_CHECK(executed);
 }
@@ -110,20 +181,20 @@ BOOST_AUTO_TEST_CASE(fail1) {
 
   CancelerPtr canceler = make_shared<Canceler>();
 
-  Task<int>::Ptr p = post<int>(ios, []() {
+  auto p = post(ios, []() {
     return success<int>(10);
   })
-  ->bind<float>([&ios](int a) {
+  >= [&ios](int a) {
     return fail<float>(operation_aborted);
-  })
-  ->bind<int>([](float a) {
+  }
+  >= [](float a) {
       return success<int>(a+2);
-  });
+  };
 
-  p->run(canceler, [](Error<int> i) {
-      BOOST_REQUIRE(i.is_error());
-      BOOST_REQUIRE(i.error() == operation_aborted);
-      });
+  p.run(canceler, [](Error<int> i) {
+     BOOST_REQUIRE(i.is_error());
+     BOOST_REQUIRE(i.error() == operation_aborted);
+     });
 
   int poll_count = 0;
 
@@ -139,22 +210,22 @@ BOOST_AUTO_TEST_CASE(fail2) {
 
   CancelerPtr canceler = make_shared<Canceler>();
 
-  Task<int>::Ptr p = post<int>(ios, []() {
+  auto p = post(ios, []() {
     return success<int>(10);
   })
-  ->bind<float>([&ios](int a) {
-    return post<float>(ios, [a]() {
+  >= [&ios](int a) {
+    return post(ios, [a]() {
       return success<float>(2*a + 1);
-      });
-  })
-  ->bind<int>([](float a) {
-      return fail<int>(asio::error::operation_aborted);
-  });
+    });
+  }
+  >= [](float a) {
+    return fail<int>(asio::error::operation_aborted);
+  };
 
-  p->run(canceler, [](Error<int> i) {
-      BOOST_REQUIRE(i.is_error());
-      BOOST_REQUIRE(i.error() == asio::error::operation_aborted);
-      });
+  p.run(canceler, [](Error<int> i) {
+     BOOST_REQUIRE(i.is_error());
+     BOOST_REQUIRE(i.error() == asio::error::operation_aborted);
+     });
 
   int poll_count = 0;
 
@@ -174,23 +245,23 @@ BOOST_AUTO_TEST_CASE(canceling) {
   bool first_executed  = false;
   bool second_executed = false;
 
-  Task<float>::Ptr p = post<int>(ios, [&first_executed]() {
+  auto p = post(ios, [&first_executed]() {
     first_executed = true;
     return success<int>(10);
   })
-  ->bind<float>([&second_executed, &ios](int a) {
-    return post<float>(ios, [a, &second_executed]() {
+  >= [&second_executed, &ios](int a) {
+    return post(ios, [a, &second_executed]() {
       second_executed = true;
       return success<float>(2*a + 1);
       });
-  });
+  };
 
   bool executed = false;
 
-  p->run(canceler, [&executed](Error<float> i) {
-      executed = true;
-      BOOST_REQUIRE(i.is_error());
-      });
+  p.run(canceler, [&executed](Error<float> i) {
+     executed = true;
+     BOOST_REQUIRE(i.is_error());
+     });
 
   int poll_count = 0;
 

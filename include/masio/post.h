@@ -5,42 +5,39 @@
 
 namespace masio {
 
-template<class A> struct Post : public Task<A> {
-  typedef Lambda<A>                   Super;
-  typedef typename Super::CancelerPtr CancelerPtr;
-  typedef typename Super::Rest        Rest;
-  typedef typename Super::Run         Run;
-  typedef std::function<typename Task<A>::Ptr ()> Handler;
+template<typename H, class A> struct Post  {
+  using value_type = A;
+  typedef std::shared_ptr<Canceler> CancelerPtr;
 
-  Post(boost::asio::io_service& ios, const Handler& r)
-    : _handler(r)
+  Post(boost::asio::io_service& ios, const H& h)
+    : _handler(h)
     , _io_service(ios) {}
 
+  template<class Rest>
   void run(const CancelerPtr& canceler, const Rest& rest) const {
     using namespace boost::asio::error;
 
-    auto self = this->shared_from_this();
-
-    _io_service.post([=]() {
-        capture(self);
+    auto h = _handler;
+    _io_service.post([h, rest, canceler]() {
 
         if (canceler->canceled()) {
           rest(typename Error<A>::Fail{operation_aborted});
           return;
         }
 
-        _handler()->run(canceler, rest);
+        h().run(canceler, rest);
         });
   }
 
-  Handler _handler;
+  H _handler;
   boost::asio::io_service& _io_service;
 };
 
-template<class A>
-std::shared_ptr<Post<A>> post( boost::asio::io_service& ios
-                             , const typename Post<A>::Handler& handler) {
-  return std::make_shared<Post<A>>(ios, handler);
+template< typename F
+        , typename A = typename std::result_of<F()>::type::value_type>
+Post<F, A>
+post(boost::asio::io_service& ios, const F& handler) {
+  return Post<F, A>(ios, handler);
 }
 
 } // masio namespace
