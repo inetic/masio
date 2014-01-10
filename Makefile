@@ -17,4 +17,7 @@ run: all
 	@echo $@
 	@g++ -I$(INC_DIR) -ggdb -std=c++11 $< $(LIBS) -o $@
 
-
+clean:
+	-rm ./tests/core
+	-rm ./tests/sleep
+	-rm ./tests/all

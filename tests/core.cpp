@@ -21,7 +21,7 @@ BOOST_AUTO_TEST_CASE(zero_binds) {
 
   p.run(canceler, [&executed](Error<int> i) {
      BOOST_REQUIRE(!i.is_error());
-     BOOST_REQUIRE_EQUAL(i.value(), 10);
+     BOOST_REQUIRE_EQUAL(*i, 10);
      executed = true;
      });
 
@@ -39,7 +39,7 @@ BOOST_AUTO_TEST_CASE(one_bind) {
 
   p2.run(canceler, [&executed](Error<int> i) {
       BOOST_REQUIRE(!i.is_error());
-      BOOST_REQUIRE_EQUAL(i.value(), 11);
+      BOOST_REQUIRE_EQUAL(*i, 11);
       executed = true;
       });
 
@@ -56,7 +56,7 @@ BOOST_AUTO_TEST_CASE(one_bind_one_var) {
 
   p.run(canceler, [&executed](Error<int> i) {
      BOOST_REQUIRE(!i.is_error());
-     BOOST_REQUIRE_EQUAL(i.value(), 11);
+     BOOST_REQUIRE_EQUAL(*i, 11);
      executed = true;
      });
 
@@ -75,7 +75,7 @@ BOOST_AUTO_TEST_CASE(two_binds) {
 
   p3.run(canceler, [&executed](Error<int> i) {
       BOOST_REQUIRE(!i.is_error());
-      BOOST_REQUIRE_EQUAL(i.value(), 12);
+      BOOST_REQUIRE_EQUAL(*i, 12);
       executed = true;
       });
 
@@ -94,7 +94,7 @@ BOOST_AUTO_TEST_CASE(two_binds_one_var) {
 
   p.run(canceler, [&executed](Error<int> i) {
      BOOST_REQUIRE(!i.is_error());
-     BOOST_REQUIRE_EQUAL(i.value(), 12);
+     BOOST_REQUIRE_EQUAL(*i, 12);
      executed = true;
      });
 
@@ -113,7 +113,7 @@ BOOST_AUTO_TEST_CASE(zero_binds_one_post) {
 
   p.run(canceler, [](Error<int> i) {
      BOOST_REQUIRE(!i.is_error());
-     BOOST_REQUIRE(i.value() == 10);
+     BOOST_REQUIRE_EQUAL(*i, 10);
      });
 
   int poll_count = 0;
@@ -141,7 +141,7 @@ BOOST_AUTO_TEST_CASE(binds_and_posts) {
 
   p.run(canceler, [](Error<int> i) {
      BOOST_REQUIRE(!i.is_error());
-     BOOST_REQUIRE(i.value() == 23);
+     BOOST_REQUIRE_EQUAL(*i, 23);
      });
 
   int poll_count = 0;
@@ -165,7 +165,7 @@ BOOST_AUTO_TEST_CASE(fail0) {
 
   p.run(canceler, [&executed](Error<int> i) {
      BOOST_REQUIRE(i.is_error());
-     BOOST_REQUIRE(i.error() == asio::error::operation_aborted);
+     BOOST_REQUIRE_EQUAL(i.error(), asio::error::operation_aborted);
      executed = true;
      });
 
@@ -193,7 +193,7 @@ BOOST_AUTO_TEST_CASE(fail1) {
 
   p.run(canceler, [](Error<int> i) {
      BOOST_REQUIRE(i.is_error());
-     BOOST_REQUIRE(i.error() == operation_aborted);
+     BOOST_REQUIRE_EQUAL(i.error(), operation_aborted);
      });
 
   int poll_count = 0;
@@ -224,7 +224,7 @@ BOOST_AUTO_TEST_CASE(fail2) {
 
   p.run(canceler, [](Error<int> i) {
      BOOST_REQUIRE(i.is_error());
-     BOOST_REQUIRE(i.error() == asio::error::operation_aborted);
+     BOOST_REQUIRE_EQUAL(i.error(), asio::error::operation_aborted);
      });
 
   int poll_count = 0;
