@@ -25,7 +25,8 @@ template<class A> struct Error
   const A&  value() const;
   ErrorCode error() const;
 
-  const A& operator*() const { return value(); }
+  const A& operator*() const  { return value(); }
+  const A* operator->() const { return &value(); }
 
 private:
   union {

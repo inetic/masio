@@ -3,37 +3,41 @@
 
 namespace masio {
 
-template<class A> class WithCanceler : public Task<A> {
+template<class MA> class WithCanceler {
 public:
-  typedef Task<A>                     Super;
-  typedef typename Super::CancelerPtr CancelerPtr;
-  typedef typename Super::Rest        Rest;
-  typedef typename Super::Run         Run;
+  using CancelerPtr = std::shared_ptr<Canceler>;
+  using value_type  = typename MA::value_type;
+
+  //typedef Task<A>                     Super;
+  //typedef typename Super::CancelerPtr CancelerPtr;
+  //typedef typename Super::Rest        Rest;
+  //typedef typename Super::Run         Run;
 public:
-  WithCanceler(const CancelerPtr& canceler, const typename Super::Ptr& delegate)
+  WithCanceler(const CancelerPtr& canceler, const MA& delegate)
     : _canceler(canceler)
     , _delegate(delegate)
   { }
 
-  void run(const CancelerPtr& s, const Rest& rest) const override {
+  template<typename Rest>
+  void run(const CancelerPtr& s, const Rest& rest) const {
     s->link_child_canceler(*_canceler);
     auto c = _canceler;
-    _delegate->run(_canceler, [c,rest](const Error<A>& ea) {
+    _delegate.run(_canceler, [c,rest](const Error<value_type>& ea) {
         c->unlink();
         rest(ea);
         });
   }
 
 private:
-  CancelerPtr         _canceler;
-  typename Super::Ptr _delegate;
+  CancelerPtr _canceler;
+  MA          _delegate;
 };
 
-template<class A>
-typename WithCanceler<A>::Ptr
-with_canceler( const typename Task<A>::CancelerPtr& canceler
-             , const typename Task<A>::Ptr&      delegate) {
-  return std::make_shared<WithCanceler<A>>(canceler, delegate);
+template<typename MA>
+WithCanceler<MA>
+with_canceler( const std::shared_ptr<Canceler>& canceler
+             , const MA&                        delegate) {
+  return WithCanceler<MA>(canceler, delegate);
 }
 
 } // masio namespace

@@ -3,44 +3,41 @@
 
 namespace masio {
 
-template<class A>
-class MayFail : public Task<Error<A>> {
+template<typename MA> class MayFail {
 public:
-  typedef Task<Error<A>>              Super;
-  typedef typename Super::CancelerPtr CancelerPtr;
-  typedef typename Super::Rest        Rest;
-  typedef typename Super::Run         Run;
+  using CancelerPtr = std::shared_ptr<Canceler>;
+  using A           = typename MA::value_type;
+  using value_type  = Error<A>;
 
 public:
-  MayFail(const std::shared_ptr<Task<A>>& delegate)
+  MayFail(const MA& delegate)
     : _delegate(delegate)
   { }
 
+  template<typename Rest>
   void run(const CancelerPtr& s, const Rest& rest) const override {
     using namespace boost::asio;
 
-    auto self = Super::shared_from_this();
-
-    _delegate->run(s, [self, s, rest](const Error<A>& ea) {
-        typedef typename Error<Error<A>>::Success Success;
-        typedef typename Error<Error<A>>::Fail    Fail;
+    _delegate.run(s, [s, rest](const Error<A>& ea) {
+        using Success = typename Error<value_type>::Success;
+        using Fail    = typename Error<value_type>::Fail;
 
         if (s->canceled() && !ea.is_error()) {
-          rest(Error<Error<A>>(Success{Fail{error::operation_aborted}}));
+          rest(Error<value_type>(Success{Fail{error::operation_aborted}}));
         }
         else {
-          rest(Error<Error<A>>(Success{ea}));
+          rest(Error<value_type>(Success{ea}));
         }
         });
   }
 
 private:
-  std::shared_ptr<Task<A>> _delegate;
+  MA _delegate;
 };
 
-template<class A> std::shared_ptr<MayFail<A>>
-may_fail(const std::shared_ptr<Task<A>>& delegate) {
-  return std::make_shared<MayFail<A>>(delegate);
+template<typename MA> MayFail<MA>
+may_fail(const MA& delegate) {
+  return MayFail<MA>(delegate);
 }
 
 } // masio namespace

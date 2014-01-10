@@ -5,13 +5,12 @@ LIBS      := -lboost_system -lboost_unit_test_framework
 
 .PHONY: all
 
-#all: tests/core tests/sleep tests/all
-all: tests/core
+all: tests/core tests/sleep tests/all
 
 run: all
 	@./tests/core
-	#@./tests/sleep
-	#@./tests/all
+	@./tests/sleep
+	@./tests/all
 
 %: %.cpp $(INC_FILES) Makefile
 	@echo $@

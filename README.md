@@ -24,23 +24,26 @@ The StateT is something I'm not sure about as it is not pure: the cancelation st
     unsigned int duration0 = 123; // milliseconds
     unsigned int duration1 = 234;
 
-    Task<Time>::Ptr p0 = sleep<Time>(ios, duration0, [p1_canceler]() {
+    auto p0 = sleep(ios, duration0, [p1_canceler]() {
         p1_canceler->cancel();
         return success<Time>(now());
       })
-      ->bind<Time>([](Time t) { return success(t); });
+      >= [](Time t) { return success(t); };
 
-    Task<Time>::Ptr p1 = with_canceler<Time>( p1_canceler
-                                            , sleep<Time>(ios, duration1, []() {
+    auto p1 = with_canceler( p1_canceler
+                           , sleep(ios, duration1, []() {
         return success<Time>(now());
       }))
-      ->bind<Time>([](Time t) { return success(t); });
+      >= [](Time t) { return success(t); };
       
-    All<Time>::Ptr p = all<Time>(p0, p1);
+    auto p = all<Time>(p0, p1);
 
-    p->run(canceler, [] (Error<std::vector<Error<Time>>> ers) {
-                       // ers is the result of the computation
-                       // ers[0] shall be success and ers[1] shall be error::operation_aborted
+    using Results = pair<Error<Time>, Error<Time>>;
+
+    p.run(canceler, [] (Error<Results> ers) {
+                       // ers is the result of the computation.
+                       // In this case, ers.first shall be success
+                       // and ers.second shall be error::operation_aborted
                      });
                   
     ios.run();

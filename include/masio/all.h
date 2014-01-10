@@ -3,53 +3,58 @@
 
 namespace masio {
 
-template<class A> class All : public Task<std::vector<Error<A>>> {
+template<class MA, class MB> class All {
 public:
-  typedef std::vector<Error<A>>       Result;
-  typedef Task<Result>                Super;
-  typedef typename Super::CancelerPtr CancelerPtr;
-  typedef typename Super::Rest        Rest;
-  typedef typename Super::Run         Run;
-  typedef typename Super::Ptr         Ptr;
+  using CancelerPtr = std::shared_ptr<Canceler>;
+  using A           = typename MA::value_type;
+  using B           = typename MB::value_type;
+  using value_type  = std::pair<Error<A>, Error<B>>;
 
-  typedef typename Task<A>::Ptr    SubPtr;
+  //typedef std::vector<Error<A>>       Result;
+  //typedef Task<Result>                Super;
+  //typedef typename Super::CancelerPtr CancelerPtr;
+  //typedef typename Super::Rest        Rest;
+  //typedef typename Super::Run         Run;
+  //typedef typename Super::Ptr         Ptr;
+
+  //typedef typename Task<A>::Ptr    SubPtr;
 
 public:
-  All(const SubPtr& c1, const SubPtr& c2)
-    : _tasks{c1, c2}
+  All(const MA& ma, const MB& mb)
+    : ma(ma)
+    , mb(mb)
   {}
 
-  void run(const CancelerPtr& canceler, const Rest& rest) const override {
+  template<typename Rest>
+  void run(const CancelerPtr& canceler, const Rest& rest) const {
     using namespace std;
 
-    auto self      = Super::shared_from_this();
+    auto remaining = make_shared<size_t>(2);
+    auto results   = make_shared<value_type>();
 
-    auto remaining = make_shared<size_t>(_tasks.size());
-    auto results   = make_shared<Result>(*remaining);
+    ma.run(canceler, [remaining, results, rest](const Error<A>& ea) {
+        results->first = ea;
+        if(--*remaining == 0) {
+          rest(typename Error<value_type>::Success{*results});
+        }
+        });
 
-    auto ci = _tasks.begin();
-    auto ri = results->begin();
-
-    for (; ci != _tasks.end(); ++ci, ++ri) {
-      (*ci)->run(canceler, [self, remaining, results, ri, rest]
-                           (const Error<A> e) {
-          *ri = e;
-          --*remaining;
-          if (*remaining == 0) {
-            rest(typename Error<Result>::Success{*results});
-          }
-          });
-    }
+    mb.run(canceler, [remaining, results, rest](const Error<B>& eb) {
+        results->second = eb;
+        if(--*remaining == 0) {
+          rest(typename Error<value_type>::Success{*results});
+        }
+        });
   }
 
 private:
-  std::list<SubPtr> _tasks;
+  MA ma;
+  MB mb;
 };
 
-template<class A>
-typename All<A>::Ptr all( const typename Task<A>::Ptr& a
-                        , const typename Task<A>::Ptr& b) {
-  return std::make_shared<All<A>>(a, b);
+template<typename MA, typename MB>
+All<MA, MB> all(const MA& ma, const MB& mb) {
+  return All<MA, MB>(ma, mb);
 }
 
 } // masio namespace
