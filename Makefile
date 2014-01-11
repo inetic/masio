@@ -2,21 +2,19 @@
 INC_DIR   := include
 INC_FILES := $(shell find $(INC_DIR) -name '*.h')
 LIBS      := -lboost_system -lboost_unit_test_framework
+TEST_DIR  := tests
+TESTS     := core post sleep all
 
-.PHONY: all
+.PHONY: all run clean
 
-all: tests/core tests/sleep tests/all
+all: $(addprefix $(TEST_DIR)/, $(TESTS))
 
 run: all
-	@./tests/core
-	@./tests/sleep
-	@./tests/all
+	@for t in $(TESTS); do $(TEST_DIR)/$$t || exit 1; done
 
 %: %.cpp $(INC_FILES) Makefile
 	@echo $@
 	@g++ -I$(INC_DIR) -ggdb -std=c++11 $< $(LIBS) -o $@
 
 clean:
-	-rm ./tests/core
-	-rm ./tests/sleep
-	-rm ./tests/all
+	@-for t in $(TESTS); do rm $(TEST_DIR)/$$t; done

@@ -1,5 +1,5 @@
-#ifndef __MASIO_TASK_H__
-#define __MASIO_TASK_H__
+#ifndef __MASIO_BIND_H__
+#define __MASIO_BIND_H__
 
 #include <type_traits>
 #include "canceler.h"
@@ -50,4 +50,4 @@ template<typename MA, typename F>
 masio::Bind<MA, F> operator>=(const MA& ma, const F& f) {
   return masio::Bind<MA, F>(ma, f);
 }
-#endif // ifndef __MASIO_TASK_H__
+#endif // ifndef __MASIO_BIND_H__

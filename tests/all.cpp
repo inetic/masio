@@ -31,8 +31,8 @@ BOOST_AUTO_TEST_CASE(test_all) {
 
   CancelerPtr canceler = make_shared<Canceler>();
 
-  auto p1 = post(ios, []() { return success<int>(11); });
-  auto p2 = post(ios, []() { return success<int>(22); });
+  auto p1 = post(ios, []() { return success(11); });
+  auto p2 = post(ios, []() { return success(22); });
 
   auto p = all(p1, p2);
 
@@ -76,11 +76,11 @@ BOOST_AUTO_TEST_CASE(test_all_sleep) {
   unsigned int duration1 = 234;
 
   auto p0 = sleep(ios, duration0, []() {
-      return success<Time>(now());
+      return success(now());
       });
 
   auto p1 = sleep(ios, duration1, []() {
-      return success<Time>(now());
+      return success(now());
       });
 
   auto p = all(p0, p1);
@@ -134,11 +134,11 @@ BOOST_AUTO_TEST_CASE(test_all_sleep_and_cancel) {
 
   auto p0 = sleep(ios, duration0, [canceler]() {
       canceler->cancel();
-      return success<Time>(now());
+      return success(now());
       });
 
   auto p1 = sleep(ios, duration1, []() {
-      return success<Time>(now());
+      return success(now());
       });
 
   auto p = all(p0, p1);
@@ -193,13 +193,13 @@ BOOST_AUTO_TEST_CASE(test_all_sleep_and_cancel_subcancelers) {
 
   auto p0 = sleep(ios, duration0, [p1_canceler]() {
       p1_canceler->cancel();
-      return success<Time>(now());
+      return success(now());
       })
       >= [](Time t) { return success(t); };
 
   auto p1 = with_canceler( p1_canceler
                          , sleep(ios, duration1, []() {
-      return success<Time>(now());
+      return success(now());
       }))
       >= [](Time t) { return success(t); };
 

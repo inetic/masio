@@ -33,18 +33,18 @@ BOOST_AUTO_TEST_CASE(test_sleep) {
   })
   >= [&ios, wait_duration](int a) {
     return sleep(ios, wait_duration, [a]() {
-      return success<float>(2*a + 1);
+      return success(2*a + 1.6);
       });
   }
   >= [](float a) {
-      return success<int>(a+2);
+      return success<int>(a*2);
   };
 
   auto start = now();
 
   p.run(canceler, [start, wait_duration](Error<int> i) {
      BOOST_REQUIRE(!i.is_error());
-     BOOST_REQUIRE_EQUAL(*i, 23);
+     BOOST_REQUIRE_EQUAL(*i, 43);
      REQUIRE_DURATION(now() - start, wait_duration);
      });
 

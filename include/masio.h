@@ -5,8 +5,9 @@
 
 #include <masio/error.h>
 #include <masio/bind.h>
-#include <masio/post.h>
 #include <masio/return.h>
+#include <masio/task.h>
+#include <masio/post.h>
 #include <masio/fail.h>
 #include <masio/sleep.h>
 #include <masio/may_fail.h>
