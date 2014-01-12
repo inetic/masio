@@ -1,5 +1,5 @@
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE Sleep
+#define BOOST_TEST_MODULE Wait
 #include <boost/test/unit_test.hpp>
 
 #include <masio.h>
@@ -20,7 +20,7 @@ system_clock::time_point now() { return system_clock::now(); }
                         - reference)\
                   , 1);
 //------------------------------------------------------------------------------
-BOOST_AUTO_TEST_CASE(test_sleep) {
+BOOST_AUTO_TEST_CASE(test_wait) {
   asio::io_service ios;
 
   unsigned int wait_duration = 500; // Half a second
@@ -31,9 +31,8 @@ BOOST_AUTO_TEST_CASE(test_sleep) {
     return success<int>(10);
   })
   >= [&ios, wait_duration](int a) {
-    return sleep(ios, wait_duration, [a]() {
-      return success(2*a + 1.6);
-      });
+    return masio::wait(ios, wait_duration)
+        >= [a](none_t) { return success(2*a + 1.6); };
   }
   >= [](float a) {
       return success<int>(a*2);
@@ -57,7 +56,7 @@ BOOST_AUTO_TEST_CASE(test_sleep) {
 }
 
 //------------------------------------------------------------------------------
-BOOST_AUTO_TEST_CASE(test_cancel_sleep) {
+BOOST_AUTO_TEST_CASE(test_cancel_wait) {
   asio::io_service ios;
 
   Canceler canceler;
@@ -68,9 +67,8 @@ BOOST_AUTO_TEST_CASE(test_cancel_sleep) {
     return success<int>(10);
   })
   >= [&ios, wait_duration](int a) {
-    return sleep(ios, wait_duration, [a]() {
-      return success<float>(2*a + 1);
-      });
+    return masio::wait(ios, wait_duration)
+        >= [a](none_t) { return success<float>(2*a + 1); };
   }
   >= [](float a) {
       return success<int>(a+2);
@@ -96,7 +94,7 @@ BOOST_AUTO_TEST_CASE(test_cancel_sleep) {
 }
 
 //------------------------------------------------------------------------------
-BOOST_AUTO_TEST_CASE(test_sleep_and_may_fail) {
+BOOST_AUTO_TEST_CASE(test_wait_and_may_fail) {
   asio::io_service ios;
 
   Canceler canceler;
@@ -107,9 +105,8 @@ BOOST_AUTO_TEST_CASE(test_sleep_and_may_fail) {
     return success<int>(10);
   })
   >= [&ios, wait_duration](int a) {
-    return may_fail(sleep(ios, wait_duration, [a]() {
-      return success<int>(2*a + 1);
-      }));
+    return may_fail(masio::wait(ios, wait_duration)
+                    >= [a](none_t) { return success<int>(2*a + 1); });
   };
 
   auto start = now();
@@ -131,7 +128,7 @@ BOOST_AUTO_TEST_CASE(test_sleep_and_may_fail) {
 }
 
 //------------------------------------------------------------------------------
-BOOST_AUTO_TEST_CASE(test_cancel_sleep_and_may_fail) {
+BOOST_AUTO_TEST_CASE(test_cancel_wait_and_may_fail) {
   asio::io_service ios;
 
   Canceler canceler;
@@ -142,9 +139,8 @@ BOOST_AUTO_TEST_CASE(test_cancel_sleep_and_may_fail) {
     return success<int>(10);
   })
   >= [&ios, wait_duration](int a) {
-    return may_fail(sleep(ios, wait_duration, [a]() {
-      return success<int>(2*a + 1);
-      }));
+    return may_fail(masio::wait(ios, wait_duration)
+                 >= [a](none_t) { return success<int>(2*a + 1); });
   };
 
   auto start = now();

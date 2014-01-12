@@ -24,16 +24,18 @@ The StateT is something I'm not sure about as it is not pure: the cancelation st
     unsigned int duration0 = 123; // milliseconds
     unsigned int duration1 = 234;
 
-    auto p0 = sleep(ios, duration0, [&p1_canceler]() {
-        p1_canceler.cancel();
-        return success<Time>(now());
-      })
-      >= [](Time t) { return success(t); };
+    auto p0 = wait(ios, duration0)
+           >= [&p1_canceler](none_t) {
+                p1_canceler.cancel();
+                return success<Time>(now());
+              }
+           >= [](Time t) { return success(t); };
 
     auto p1 = with_canceler( p1_canceler
-                           , sleep(ios, duration1, []() {
-        return success<Time>(now());
-      }))
+                           , wait(ios, duration1)
+                            >= [](none_t) {
+                              return success<Time>(now());
+                            })
       >= [](Time t) { return success(t); };
       
     auto p = all<Time>(p0, p1);

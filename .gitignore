@@ -3,5 +3,5 @@ main
 *.swp
 tests/core
 tests/post
-tests/sleep
+tests/wait
 tests/all

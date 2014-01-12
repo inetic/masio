@@ -3,7 +3,7 @@ INC_DIR   := include
 INC_FILES := $(shell find $(INC_DIR) -name '*.h')
 LIBS      := -lboost_system -lboost_unit_test_framework
 TEST_DIR  := tests
-TESTS     := core post sleep all
+TESTS     := core post wait all
 
 .PHONY: all run clean
 

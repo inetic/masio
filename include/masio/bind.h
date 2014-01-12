@@ -49,4 +49,5 @@ template<typename MA, typename F>
 masio::Bind<MA, F> operator>=(const MA& ma, const F& f) {
   return masio::Bind<MA, F>(ma, f);
 }
+
 #endif // ifndef __MASIO_BIND_H__

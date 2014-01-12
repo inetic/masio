@@ -1,5 +1,5 @@
 #define BOOST_TEST_DYN_LINK
-#define BOOST_TEST_MODULE Sleep
+#define BOOST_TEST_MODULE All
 #include <boost/test/unit_test.hpp>
 
 #include <masio.h>
@@ -64,7 +64,9 @@ BOOST_AUTO_TEST_CASE(test_all) {
 }
 
 //--------------------------------------------------------------------
-BOOST_AUTO_TEST_CASE(test_all_sleep) {
+BOOST_AUTO_TEST_CASE(test_all_wait) {
+  using masio::wait;
+
   asio::io_service ios;
 
   Canceler canceler;
@@ -74,13 +76,8 @@ BOOST_AUTO_TEST_CASE(test_all_sleep) {
   unsigned int duration0 = 123;
   unsigned int duration1 = 234;
 
-  auto p0 = sleep(ios, duration0, []() {
-      return success(now());
-      });
-
-  auto p1 = sleep(ios, duration1, []() {
-      return success(now());
-      });
+  auto p0 = wait(ios, duration0) >= [](none_t) { return success(now()); };
+  auto p1 = wait(ios, duration1) >= [](none_t) { return success(now()); };
 
   auto p = all(p0, p1);
 
@@ -121,7 +118,9 @@ BOOST_AUTO_TEST_CASE(test_all_sleep) {
 }
 
 //--------------------------------------------------------------------
-BOOST_AUTO_TEST_CASE(test_all_sleep_and_cancel) {
+BOOST_AUTO_TEST_CASE(test_all_wait_and_cancel) {
+  using masio::wait;
+
   asio::io_service ios;
 
   Canceler canceler;
@@ -131,14 +130,14 @@ BOOST_AUTO_TEST_CASE(test_all_sleep_and_cancel) {
   unsigned int duration0 = 123;
   unsigned int duration1 = 234;
 
-  auto p0 = sleep(ios, duration0, [&canceler]() {
-      canceler.cancel();
-      return success(now());
-      });
+  auto p0 = wait(ios, duration0)
+         >= [&canceler](none_t) {
+              canceler.cancel();
+              return success(now());
+            };
 
-  auto p1 = sleep(ios, duration1, []() {
-      return success(now());
-      });
+  auto p1 = wait(ios, duration1)
+         >= [](none_t) { return success(now()); };
 
   auto p = all(p0, p1);
 
@@ -179,7 +178,9 @@ BOOST_AUTO_TEST_CASE(test_all_sleep_and_cancel) {
 }
 
 //--------------------------------------------------------------------
-BOOST_AUTO_TEST_CASE(test_all_sleep_and_cancel_subcancelers) {
+BOOST_AUTO_TEST_CASE(test_all_wait_and_cancel_subcancelers) {
+  using masio::wait;
+
   asio::io_service ios;
 
   Canceler canceler;
@@ -190,17 +191,18 @@ BOOST_AUTO_TEST_CASE(test_all_sleep_and_cancel_subcancelers) {
   unsigned int duration0 = 123;
   unsigned int duration1 = 234;
 
-  auto p0 = sleep(ios, duration0, [&p1_canceler]() {
-      p1_canceler.cancel();
-      return success(now());
-      })
-      >= [](Time t) { return success(t); };
+  auto p0 = wait(ios, duration0)
+         >= [&p1_canceler](none_t) {
+              p1_canceler.cancel();
+              return success(now());
+            }
+         >= [](Time t) { return success(t); };
 
   auto p1 = with_canceler( p1_canceler
-                         , sleep(ios, duration1, []() {
-      return success(now());
-      }))
-      >= [](Time t) { return success(t); };
+                         , wait(ios, duration1) >= [](none_t) {
+                             return success(now());
+                           })
+         >= [](Time t) { return success(t); };
 
   auto p = all(p0, p1);
 
