@@ -38,6 +38,8 @@ public:
   }
 
   void cancel() {
+    if (_canceled) return;
+
     _canceled = true;
 
     for (auto& c : _cancel_actions) {

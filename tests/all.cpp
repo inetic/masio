@@ -22,7 +22,7 @@ std::ostream& operator<<(std::ostream& os, const system_clock::time_point& t) {
 //------------------------------------------------------------------------------
 #define REQUIRE_DURATION(duration, reference) \
   BOOST_REQUIRE_LE( abs(duration_cast<milliseconds>(duration).count() \
-                        - reference)\
+                        - (reference))\
                   , 1);
 //--------------------------------------------------------------------
 BOOST_AUTO_TEST_CASE(test_all) {
@@ -175,6 +175,71 @@ BOOST_AUTO_TEST_CASE(test_all_wait_and_cancel) {
 
   BOOST_REQUIRE(executed);
   BOOST_REQUIRE_EQUAL(poll_count, 2);
+}
+
+//--------------------------------------------------------------------
+BOOST_AUTO_TEST_CASE(test_all_wait_and_pause) {
+  using masio::wait;
+  using masio::pause;
+
+  asio::io_service ios;
+
+  Canceler canceler;
+  kicker   kick;
+
+  typedef system_clock::time_point Time;
+
+  unsigned int duration0 = 123;
+  unsigned int duration1 = 234;
+
+  auto p0 = wait(ios, duration0)
+         >= [&kick](none_t) {
+              kick();
+              return success(now());
+            };
+
+  auto p1 = pause(ios, kick)
+         >> wait(ios, duration1)
+         >= [](none_t) {
+           return success(now());
+         };
+
+  auto p = all(p0, p1);
+
+  bool executed = false;
+
+  auto start = now();
+
+  using Results = std::pair<Error<Time>, Error<Time>>;
+
+  p.run(canceler, [&executed, start, duration0, duration1]
+                  (Error<Results> ers) {
+     BOOST_REQUIRE(!ers.is_error());
+
+     const Results& rs = *ers;
+
+     BOOST_REQUIRE(rs.first.is_value());
+     BOOST_REQUIRE(rs.second.is_value());
+
+     auto end = now();
+     auto t0  = rs.first.value();
+     auto t1  = rs.second.value();
+
+     REQUIRE_DURATION(t0 - start, duration0);
+     REQUIRE_DURATION(t1 - start, duration0 + duration1);
+     REQUIRE_DURATION(end - start, duration0 + duration1);
+
+     executed = true;
+     });
+
+  int poll_count = 0;
+
+  while(ios.run_one()) {
+    ++poll_count;
+  }
+
+  BOOST_REQUIRE(executed);
+  BOOST_REQUIRE_EQUAL(poll_count, 3);
 }
 
 //--------------------------------------------------------------------

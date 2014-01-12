@@ -19,6 +19,7 @@ using boost::none_t;
 #include <masio/post.h>
 #include <masio/fail.h>
 #include <masio/wait.h>
+#include <masio/pause.h>
 #include <masio/may_fail.h>
 #include <masio/all.h>
 #include <masio/with_canceler.h>
