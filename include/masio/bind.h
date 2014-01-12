@@ -8,11 +8,11 @@ namespace masio {
 // [s -> (Ea -> r) -> r] ->
 // a -> [s -> (Eb -> r) -> r] ->
 // [s -> (Eb -> r) -> r]
-template<class MA, class MB> struct Bind {
+template<class MA, class MB> struct Bind 
+    : monad<Bind<MA, MB>, typename MB::value_type> {
 
   using A = typename MA::value_type;
   using F = std::function<MB(A)>;
-  //using value_type = typename std::result_of<F(A)>::type::value_type;
   using value_type = typename MB::value_type;
 
   Bind(const MA& ma, const F& f)
@@ -41,18 +41,18 @@ template<class MA, class MB> struct Bind {
 
 } // masio namespace
 
-template< typename MA
-        , typename F
-        , typename MB = typename std::result_of<F(typename MA::value_type)>::type>
-masio::Bind<MA, MB> operator>=(const MA& ma, const F& f) {
-  return masio::Bind<MA, MB>(ma, f);
-}
-
-template< typename MA
-        , typename MB>
-masio::Bind<MA, MB> operator>(const MA& ma, const MB& mb) {
-  using A = typename MA::value_type;
-  return masio::Bind<MA, MB>(ma, [mb](const A&) { return mb; });
-}
+//template< typename MA
+//        , typename F
+//        , typename MB = typename std::result_of<F(typename MA::value_type)>::type>
+//masio::Bind<MA, MB> operator>=(const MA& ma, const F& f) {
+//  return masio::Bind<MA, MB>(ma, f);
+//}
+//
+//template< typename MA
+//        , typename MB>
+//masio::Bind<MA, MB> operator>(const MA& ma, const MB& mb) {
+//  using A = typename MA::value_type;
+//  return masio::Bind<MA, MB>(ma, [mb](const A&) { return mb; });
+//}
 
 #endif // ifndef __MASIO_BIND_H__

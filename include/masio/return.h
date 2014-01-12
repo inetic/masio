@@ -3,8 +3,8 @@
 
 namespace masio {
 
-template<class A> struct Return {
-  using value_type = A;
+template<class A> struct Return : monad<Return<A>, A> {
+  //using value_type = A;
 
   Return(const A& a) : value(a) {}
 

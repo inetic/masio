@@ -3,7 +3,7 @@
 
 namespace masio {
 
-struct post {
+struct post : monad<post, none_t> {
   using value_type = none_t;
 
   post(boost::asio::io_service& ios) : _io_service(ios) {}

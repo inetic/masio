@@ -3,7 +3,7 @@
 
 namespace masio {
 
-struct accept {
+struct accept : monad<accept, none_t> {
   using tcp = boost::asio::ip::tcp;
   using value_type = none_t;
 

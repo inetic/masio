@@ -3,7 +3,7 @@
 
 namespace masio {
 
-template<typename A> struct task {
+template<typename A> struct task : monad<task<A>, A> {
   using   value_type = A;
   typedef std::function<void(Error<value_type>)> Rest;
 

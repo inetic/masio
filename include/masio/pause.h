@@ -26,7 +26,7 @@ private:
   Rest rest;
 };
 
-struct pause {
+struct pause : monad<pause, none_t> {
   using value_type = none_t;
 
   pause(boost::asio::io_service& io_service, kicker& kick)

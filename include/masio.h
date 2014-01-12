@@ -11,6 +11,8 @@ using boost::none_t;
 
 } // masio namespace
 
+#include <masio/monad.h>
+
 #include <masio/canceler.h>
 #include <masio/error.h>
 #include <masio/bind.h>
@@ -35,7 +37,7 @@ namespace masio {
 template<typename MA>
 task<typename MA::value_type> forever(const MA& ma) {
   using A = typename MA::value_type;
-  return ma >= [ma](const A& a) { return forever(ma); };
+  return ma >= [ma](const A&) { return forever(ma); };
 }
 
 } // masio namespace

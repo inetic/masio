@@ -3,7 +3,7 @@
 
 namespace masio {
 
-class wait  {
+class wait : public monad<wait, none_t> {
 public:
   using value_type = none_t;
   using error_code = boost::system::error_code;

@@ -3,7 +3,9 @@
 
 namespace masio {
 
-template<class MA, class MB> class All {
+template<class MA, class MB> class All
+  : public monad<All<MA, MB>, std::pair< Error<typename MA::value_type>
+                                       , Error<typename MB::value_type>>> {
 public:
   using A           = typename MA::value_type;
   using B           = typename MB::value_type;

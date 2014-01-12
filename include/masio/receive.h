@@ -4,7 +4,8 @@
 namespace masio {
 
 template<typename MutableBufferSequence>
-struct receive_task {
+struct receive_task : monad< receive_task<MutableBufferSequence>
+                           , none_t> {
   using tcp = boost::asio::ip::tcp;
   using value_type = none_t;
 

@@ -3,10 +3,8 @@
 
 namespace masio {
 
-template<class A> struct Fail {
+template<class A> struct Fail : monad<Fail<A>, A> {
   using error_code = boost::system::error_code;
-
-  using value_type = A;
 
   Fail(const error_code& error) : error(error) {}
 

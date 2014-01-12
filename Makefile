@@ -4,7 +4,6 @@ INC_FILES := $(shell find $(INC_DIR) -name '*.h')
 LIBS      := -lboost_system -lboost_unit_test_framework -lpthread
 TEST_DIR  := tests
 TESTS     := core post wait all socket_io
-#TESTS     := socket_io
 
 .PHONY: all run clean
 

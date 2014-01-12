@@ -3,7 +3,7 @@
 
 namespace masio {
 
-struct resolve {
+struct resolve : monad<resolve, boost::asio::ip::tcp::resolver::iterator> {
   using tcp = boost::asio::ip::tcp;
   using value_type = tcp::resolver::iterator;
 

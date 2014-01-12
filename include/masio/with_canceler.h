@@ -3,7 +3,8 @@
 
 namespace masio {
 
-template<class MA> class WithCanceler {
+template<class MA> class WithCanceler
+  : public monad<WithCanceler<MA>, typename MA::value_type> {
 public:
   using value_type  = typename MA::value_type;
 
