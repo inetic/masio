@@ -23,9 +23,11 @@ using boost::none_t;
 #include <masio/may_fail.h>
 #include <masio/all.h>
 #include <masio/with_canceler.h>
-#include <masio/send.h>
+
 #include <masio/connect.h>
 #include <masio/accept.h>
+#include <masio/send.h>
+#include <masio/receive.h>
 
 namespace masio {
 

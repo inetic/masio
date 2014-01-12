@@ -117,3 +117,56 @@ BOOST_AUTO_TEST_CASE(test_connect_accept) {
   BOOST_REQUIRE_EQUAL(poll_count, 3);
 }
 
+//------------------------------------------------------------------------------
+BOOST_AUTO_TEST_CASE(test_send_receive) {
+  using masio::accept;
+  using masio::wait;
+  using asio::buffer;
+
+  asio::io_service ios;
+
+  tcp::socket client(ios);
+  tcp::socket server(ios);
+
+  unsigned short port = 9090;
+
+  std::string tx_buffer = "hello";
+  std::string rx_buffer = "XXXXX";
+
+  auto p1 = accept(server, port)
+         >> send(server, buffer(tx_buffer, tx_buffer.size()));
+
+  auto p2 = connect(client, resolve(ios, "localhost", port))
+         >> receive(client, buffer(&rx_buffer[0], rx_buffer.size()));
+
+  auto p = all(p1, p2);
+
+  bool executed = false;
+
+  using Results = std::pair<Error<none_t>, Error<none_t>>;
+
+  Canceler canceler;
+
+  p.run(canceler, [&executed, &rx_buffer, &tx_buffer](Error<Results> ers) {
+     BOOST_REQUIRE(!ers.is_error());
+
+     const Results& rs = *ers;
+
+     BOOST_REQUIRE(rs.first.is_value());
+     BOOST_REQUIRE(rs.second.is_value());
+
+     BOOST_REQUIRE_EQUAL(rx_buffer, tx_buffer);
+
+     executed = true;
+     });
+
+  int poll_count = 0;
+
+  while(ios.run_one()) {
+    ++poll_count;
+  }
+
+  BOOST_REQUIRE(executed);
+  BOOST_REQUIRE_EQUAL(poll_count, 4);
+}
+
