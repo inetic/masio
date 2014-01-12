@@ -5,3 +5,4 @@ tests/core
 tests/post
 tests/wait
 tests/all
+tests/socket_io

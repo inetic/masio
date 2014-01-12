@@ -1,8 +1,6 @@
 #ifndef __MASIO_POST_H__
 #define __MASIO_POST_H__
 
-#include <masio/tools.h>
-
 namespace masio {
 
 struct post {

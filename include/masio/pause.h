@@ -51,6 +51,7 @@ struct pause {
 
     kick.rest = [rest, cancel_action, ios_ptr, &canceler]() {
         cancel_action->unlink();
+
         ios_ptr->post([rest, &canceler]() {
             if (!canceler.canceled()) {
               rest(Success{none});
