@@ -11,6 +11,7 @@ using boost::none_t;
 
 } // masio namespace
 
+#include <masio/canceler.h>
 #include <masio/error.h>
 #include <masio/bind.h>
 #include <masio/return.h>

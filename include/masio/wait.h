@@ -3,8 +3,16 @@
 
 namespace masio {
 
-struct wait  {
+class wait  {
+public:
   using value_type = none_t;
+  using error_code = boost::system::error_code;
+
+private:
+  using Fail    =  Error<value_type>::Fail;
+  using Success =  Error<value_type>::Success;
+
+public:
 
   wait(boost::asio::io_service& ios, unsigned int millis)
     : _io_service(ios)
@@ -16,31 +24,34 @@ struct wait  {
     using namespace std;
     using namespace boost::asio;
     using namespace boost::posix_time;
-    using namespace boost::system;
 
-    auto timer = make_shared<deadline_timer>(_io_service, _time);
+    if (!canceler.canceled()) {
+      auto timer = make_shared<deadline_timer>(_io_service, _time);
 
-    auto cancel_action = make_shared<Canceler::CancelAction>([timer]() {
-        timer->cancel();
+      auto cancel_action = make_shared<Canceler::CancelAction>([timer]() {
+          timer->cancel();
+          });
+
+      canceler.link_cancel_action(*cancel_action);
+
+      timer->async_wait([&canceler, rest, timer, cancel_action]
+                        (const error_code& error){
+          cancel_action->unlink();
+
+          if (error) {
+            rest(Fail{error});
+          }
+          else if (canceler.canceled()) {
+            rest(Fail{error::operation_aborted});
+          }
+          else {
+            rest(Success{none});
+          }
         });
-
-    canceler.link_cancel_action(*cancel_action);
-
-    timer->async_wait([&canceler, rest, timer, cancel_action]
-          (const error_code& error){
-
-        cancel_action->unlink();
-
-        if (error) {
-          rest(typename Error<value_type>::Fail{error});
-        }
-        else if (canceler.canceled()) {
-          rest(typename Error<value_type>::Fail{error::operation_aborted});
-        }
-        else {
-          rest(typename Error<value_type>::Success{none});
-        }
-        });
+    }
+    else {
+      _io_service.post([rest](){ rest(Fail{error::operation_aborted}); });
+    }
   }
 
 private:

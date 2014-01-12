@@ -18,6 +18,7 @@ public:
   template<typename Rest>
   void run(Canceler& canceler, const Rest& rest) const {
     using namespace std;
+    using Success = typename Error<value_type>::Success;
 
     auto remaining = make_shared<size_t>(2);
     auto results   = make_shared<value_type>();
@@ -25,14 +26,14 @@ public:
     ma.run(canceler, [remaining, results, rest](const Error<A>& ea) {
         results->first = ea;
         if(--*remaining == 0) {
-          rest(typename Error<value_type>::Success{*results});
+          rest(Success{*results});
         }
         });
 
     mb.run(canceler, [remaining, results, rest](const Error<B>& eb) {
         results->second = eb;
         if(--*remaining == 0) {
-          rest(typename Error<value_type>::Success{*results});
+          rest(Success{*results});
         }
         });
   }

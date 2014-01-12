@@ -2,7 +2,6 @@
 #define __MASIO_BIND_H__
 
 #include <type_traits>
-#include "canceler.h"
 
 namespace masio {
 
@@ -27,10 +26,7 @@ template<class MA, class MB> struct Bind {
     F fcopy = f;
 
     ma.run(s, [&s, fcopy, rest](const Error<A>& ea) {
-        if (s.canceled()) {
-          rest(typename Error<value_type>::Fail{error::operation_aborted});
-        }
-        else if (ea.is_error()) {
+        if (ea.is_error()) {
           rest(typename Error<value_type>::Fail{ea.error()});
         }
         else {
