@@ -118,6 +118,57 @@ BOOST_AUTO_TEST_CASE(test_connect_accept) {
 }
 
 //------------------------------------------------------------------------------
+BOOST_AUTO_TEST_CASE(test_cancel_connect_accept) {
+  using masio::accept;
+  using masio::wait;
+
+  asio::io_service ios;
+
+  tcp::socket client(ios);
+  tcp::socket server(ios);
+
+  unsigned short port = 9090;
+
+  Canceler canceler;
+
+  auto p1 = connect(client, resolve(ios, "localhost", port));
+  auto p2 = all( accept(server, port)
+               , wait(ios, 100)
+                 >= [&canceler](none_t) {
+                   canceler.cancel();
+                   return success(none);
+                 })
+         >> success(none);
+
+  auto p = all(p1, p2);
+
+  bool executed = false;
+
+  using Results = std::pair<Error<none_t>, Error<none_t>>;
+
+
+  p.run(canceler, [&executed](Error<Results> ers) {
+     BOOST_REQUIRE(!ers.is_error());
+
+     const Results& rs = *ers;
+
+     BOOST_REQUIRE(rs.first.is_error());
+     BOOST_REQUIRE(rs.second.is_value()); // TODO: Is this correct behaviour?
+
+     executed = true;
+     });
+
+  int poll_count = 0;
+
+  while(ios.run_one()) {
+    ++poll_count;
+  }
+
+  BOOST_REQUIRE(executed);
+  BOOST_REQUIRE_EQUAL(poll_count, 3);
+}
+
+//------------------------------------------------------------------------------
 BOOST_AUTO_TEST_CASE(test_send_receive) {
   using masio::accept;
   using masio::wait;
