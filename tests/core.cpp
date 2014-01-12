@@ -9,11 +9,10 @@
 using namespace masio;
 using namespace std;
 namespace asio = boost::asio;
-typedef shared_ptr<Canceler> CancelerPtr;
 
 //------------------------------------------------------------------------------
 BOOST_AUTO_TEST_CASE(zero_binds) {
-  CancelerPtr canceler = make_shared<Canceler>();
+  Canceler canceler;
 
   auto p = success<int>(10);
 
@@ -30,7 +29,7 @@ BOOST_AUTO_TEST_CASE(zero_binds) {
 
 //------------------------------------------------------------------------------
 BOOST_AUTO_TEST_CASE(one_bind) {
-  CancelerPtr canceler = make_shared<Canceler>();
+  Canceler canceler;
 
   auto p1 = success<int>(10);
   auto p2 = p1 >= [](int i) { return success(i+1); };
@@ -48,7 +47,7 @@ BOOST_AUTO_TEST_CASE(one_bind) {
 
 //------------------------------------------------------------------------------
 BOOST_AUTO_TEST_CASE(one_bind_one_var) {
-  CancelerPtr canceler = make_shared<Canceler>();
+  Canceler canceler;
 
   auto p = success(10) >= [](int i) { return success(i+1); };
 
@@ -65,7 +64,7 @@ BOOST_AUTO_TEST_CASE(one_bind_one_var) {
 
 //------------------------------------------------------------------------------
 BOOST_AUTO_TEST_CASE(two_binds) {
-  CancelerPtr canceler = make_shared<Canceler>();
+  Canceler canceler;
 
   auto p1 = success<int>(10);
   auto p2 = p1 >= [](int i) { return success(i+1); };
@@ -84,7 +83,7 @@ BOOST_AUTO_TEST_CASE(two_binds) {
 
 //------------------------------------------------------------------------------
 BOOST_AUTO_TEST_CASE(two_binds_one_var) {
-  CancelerPtr canceler = make_shared<Canceler>();
+  Canceler canceler;
 
   auto p = success<int>(10) >= [](int i)
            { return success(i+1); } >= [](int i)
@@ -104,7 +103,7 @@ BOOST_AUTO_TEST_CASE(two_binds_one_var) {
 //------------------------------------------------------------------------------
 // Fail right at the beginning.
 BOOST_AUTO_TEST_CASE(fail0) {
-  CancelerPtr canceler = make_shared<Canceler>();
+  Canceler canceler;
 
   auto p = fail<int>(asio::error::operation_aborted)
         >= [](int a) { return success<int>(a); };
@@ -122,7 +121,7 @@ BOOST_AUTO_TEST_CASE(fail0) {
 
 //------------------------------------------------------------------------------
 BOOST_AUTO_TEST_CASE(store_in_task_zero_binds) {
-  CancelerPtr canceler = make_shared<Canceler>();
+  Canceler canceler;
 
   task<int> p = success<int>(10);
 
@@ -139,7 +138,7 @@ BOOST_AUTO_TEST_CASE(store_in_task_zero_binds) {
 
 //------------------------------------------------------------------------------
 BOOST_AUTO_TEST_CASE(store_in_task_one_bind) {
-  CancelerPtr canceler = make_shared<Canceler>();
+  Canceler canceler;
 
   task<int> p1 = success<int>(10);
   task<int> p2 = p1 >= [](int i) { return success(i+1); };
@@ -157,7 +156,7 @@ BOOST_AUTO_TEST_CASE(store_in_task_one_bind) {
 
 //------------------------------------------------------------------------------
 BOOST_AUTO_TEST_CASE(store_in_task_one_bind_one_var) {
-  CancelerPtr canceler = make_shared<Canceler>();
+  Canceler canceler;
 
   task<int> p = success(10) >= [](int i) { return success(i+1); };
 
@@ -174,7 +173,7 @@ BOOST_AUTO_TEST_CASE(store_in_task_one_bind_one_var) {
 
 //------------------------------------------------------------------------------
 BOOST_AUTO_TEST_CASE(store_in_task_two_binds) {
-  CancelerPtr canceler = make_shared<Canceler>();
+  Canceler canceler;
 
   task<int> p1 = success<int>(10);
   task<int> p2 = p1 >= [](int i) { return success(i+1); };

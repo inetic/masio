@@ -30,6 +30,9 @@ private:
 public:
   Canceler() : _canceled(false) {}
 
+  Canceler(const Canceler&) = delete;
+  Canceler& operator=(const Canceler&) = delete;
+
   void link_cancel_action(CancelAction& cancel_action) {
     _cancel_actions.push_back(cancel_action);
   }
@@ -56,12 +59,6 @@ public:
   }
 
   void unlink() { auto_unlink_hook::unlink(); }
-
-  //std::shared_ptr<Canceler> make_substate() {
-  //  auto substate = std::make_shared<Canceler>();
-  //  _children.push_back(*substate);
-  //  return substate;
-  //}
 
 private:
   Children       _children;

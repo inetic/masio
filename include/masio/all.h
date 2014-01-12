@@ -5,19 +5,9 @@ namespace masio {
 
 template<class MA, class MB> class All {
 public:
-  using CancelerPtr = std::shared_ptr<Canceler>;
   using A           = typename MA::value_type;
   using B           = typename MB::value_type;
   using value_type  = std::pair<Error<A>, Error<B>>;
-
-  //typedef std::vector<Error<A>>       Result;
-  //typedef Task<Result>                Super;
-  //typedef typename Super::CancelerPtr CancelerPtr;
-  //typedef typename Super::Rest        Rest;
-  //typedef typename Super::Run         Run;
-  //typedef typename Super::Ptr         Ptr;
-
-  //typedef typename Task<A>::Ptr    SubPtr;
 
 public:
   All(const MA& ma, const MB& mb)
@@ -26,7 +16,7 @@ public:
   {}
 
   template<typename Rest>
-  void run(const CancelerPtr& canceler, const Rest& rest) const {
+  void run(Canceler& canceler, const Rest& rest) const {
     using namespace std;
 
     auto remaining = make_shared<size_t>(2);

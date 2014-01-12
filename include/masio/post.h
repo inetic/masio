@@ -7,20 +7,19 @@ namespace masio {
 
 template<typename H, class A> struct Post  {
   using value_type = A;
-  typedef std::shared_ptr<Canceler> CancelerPtr;
 
   Post(boost::asio::io_service& ios, const H& h)
     : _handler(h)
     , _io_service(ios) {}
 
   template<class Rest>
-  void run(const CancelerPtr& canceler, const Rest& rest) const {
+  void run(Canceler& canceler, const Rest& rest) const {
     using namespace boost::asio::error;
 
     auto h = _handler;
-    _io_service.post([h, rest, canceler]() {
+    _io_service.post([h, rest, &canceler]() {
 
-        if (canceler->canceled()) {
+        if (canceler.canceled()) {
           rest(typename Error<A>::Fail{operation_aborted});
           return;
         }

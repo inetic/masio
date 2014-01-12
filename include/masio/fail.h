@@ -4,7 +4,6 @@
 namespace masio {
 
 template<class A> struct Fail {
-  typedef std::shared_ptr<Canceler>   CancelerPtr;
   using error_code = boost::system::error_code;
 
   using value_type = A;
@@ -12,7 +11,7 @@ template<class A> struct Fail {
   Fail(const error_code& error) : error(error) {}
 
   template<typename Rest>
-  void run(const CancelerPtr& canceler, const Rest& rest) const {
+  void run(Canceler& canceler, const Rest& rest) const {
     rest(typename Error<A>::Fail{error});
   }
 

@@ -16,16 +16,16 @@ The StateT is something I'm not sure about as it is not pure: the cancelation st
 
     asio::io_service ios;
 
-    CancelerPtr canceler    = make_shared<Canceler>();
-    CancelerPtr p1_canceler = make_shared<Canceler>();
+    Canceler canceler;
+    Canceler p1_canceler;
 
     typedef system_clock::time_point Time;
 
     unsigned int duration0 = 123; // milliseconds
     unsigned int duration1 = 234;
 
-    auto p0 = sleep(ios, duration0, [p1_canceler]() {
-        p1_canceler->cancel();
+    auto p0 = sleep(ios, duration0, [&p1_canceler]() {
+        p1_canceler.cancel();
         return success<Time>(now());
       })
       >= [](Time t) { return success(t); };

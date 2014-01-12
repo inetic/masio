@@ -5,7 +5,6 @@ namespace masio {
 
 template<typename MA> class MayFail {
 public:
-  using CancelerPtr = std::shared_ptr<Canceler>;
   using A           = typename MA::value_type;
   using value_type  = Error<A>;
 
@@ -15,14 +14,14 @@ public:
   { }
 
   template<typename Rest>
-  void run(const CancelerPtr& s, const Rest& rest) const override {
+  void run(Canceler& c, const Rest& rest) const override {
     using namespace boost::asio;
 
-    _delegate.run(s, [s, rest](const Error<A>& ea) {
+    _delegate.run(c, [&c, rest](const Error<A>& ea) {
         using Success = typename Error<value_type>::Success;
         using Fail    = typename Error<value_type>::Fail;
 
-        if (s->canceled() && !ea.is_error()) {
+        if (c.canceled() && !ea.is_error()) {
           rest(Error<value_type>(Success{Fail{error::operation_aborted}}));
         }
         else {

@@ -6,15 +6,14 @@ namespace masio {
 template<typename A> struct task {
   using   value_type = A;
   typedef std::function<void(Error<value_type>)> Rest;
-  typedef std::shared_ptr<Canceler> CancelerPtr;
 
   struct wrapper_interface {
-    virtual void run(const CancelerPtr&, const Rest&) const = 0;
+    virtual void run(Canceler&, const Rest&) const = 0;
     virtual ~wrapper_interface() {};
   };
 
   template<typename D> struct wrapper : wrapper_interface {
-    void run(const CancelerPtr& c, const Rest& rest) const override {
+    void run(Canceler& c, const Rest& rest) const override {
       delegate.run(c, rest);
     }
 
@@ -28,8 +27,8 @@ template<typename A> struct task {
   {}
 
   template<class Rest>
-  void run(const CancelerPtr& s, const Rest& rest) const {
-    _delegate->run(s, rest);
+  void run(Canceler& c, const Rest& rest) const {
+    _delegate->run(c, rest);
   }
 
 private:

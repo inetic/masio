@@ -10,7 +10,6 @@ using namespace masio;
 using namespace std;
 using namespace std::chrono;
 namespace asio = boost::asio;
-typedef shared_ptr<Canceler> CancelerPtr;
 
 //------------------------------------------------------------------------------
 system_clock::time_point now() { return system_clock::now(); }
@@ -26,7 +25,7 @@ BOOST_AUTO_TEST_CASE(test_sleep) {
 
   unsigned int wait_duration = 500; // Half a second
 
-  CancelerPtr canceler = make_shared<Canceler>();
+  Canceler canceler;
 
   auto p = post(ios, []() {
     return success<int>(10);
@@ -61,7 +60,7 @@ BOOST_AUTO_TEST_CASE(test_sleep) {
 BOOST_AUTO_TEST_CASE(test_cancel_sleep) {
   asio::io_service ios;
 
-  CancelerPtr canceler = make_shared<Canceler>();
+  Canceler canceler;
 
   unsigned int wait_duration = 10*1000; // Ten seconds
 
@@ -88,7 +87,7 @@ BOOST_AUTO_TEST_CASE(test_cancel_sleep) {
   int poll_count = 0;
 
   while(ios.run_one()) {
-    canceler->cancel();
+    canceler.cancel();
     ++poll_count;
   }
 
@@ -100,7 +99,7 @@ BOOST_AUTO_TEST_CASE(test_cancel_sleep) {
 BOOST_AUTO_TEST_CASE(test_sleep_and_may_fail) {
   asio::io_service ios;
 
-  CancelerPtr canceler = make_shared<Canceler>();
+  Canceler canceler;
 
   unsigned int wait_duration = 100; // Milliseconds
 
@@ -135,7 +134,7 @@ BOOST_AUTO_TEST_CASE(test_sleep_and_may_fail) {
 BOOST_AUTO_TEST_CASE(test_cancel_sleep_and_may_fail) {
   asio::io_service ios;
 
-  CancelerPtr canceler = make_shared<Canceler>();
+  Canceler canceler;
 
   unsigned int wait_duration = 10*1000; // Ten seconds
 
@@ -160,7 +159,7 @@ BOOST_AUTO_TEST_CASE(test_cancel_sleep_and_may_fail) {
   int poll_count = 0;
 
   while(ios.run_one()) {
-    canceler->cancel();
+    canceler.cancel();
     ++poll_count;
   }
 

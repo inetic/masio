@@ -4,14 +4,12 @@
 namespace masio {
 
 template<class A> struct Return {
-  typedef std::shared_ptr<Canceler>   CancelerPtr;
-
   using value_type = A;
 
   Return(const A& a) : value(a) {}
 
   template<typename Rest>
-  void run(const CancelerPtr& canceler, const Rest& rest) const {
+  void run(const Canceler& canceler, const Rest& rest) const {
     rest(typename Error<A>::Success{value});
   }
 

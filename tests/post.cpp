@@ -9,13 +9,12 @@
 using namespace masio;
 using namespace std;
 namespace asio = boost::asio;
-typedef shared_ptr<Canceler> CancelerPtr;
 
 //------------------------------------------------------------------------------
 BOOST_AUTO_TEST_CASE(zero_binds_one_post) {
   asio::io_service ios;
 
-  CancelerPtr canceler = make_shared<Canceler>();
+  Canceler canceler;
 
   auto p = post(ios, []() {
     return success(10);
@@ -37,7 +36,7 @@ BOOST_AUTO_TEST_CASE(zero_binds_one_post) {
 BOOST_AUTO_TEST_CASE(binds_and_posts) {
   asio::io_service ios;
 
-  CancelerPtr canceler = make_shared<Canceler>();
+  Canceler canceler;
 
   auto p = post(ios, []() {
     return success(10);
@@ -70,7 +69,7 @@ BOOST_AUTO_TEST_CASE(fail1) {
 
   asio::io_service ios;
 
-  CancelerPtr canceler = make_shared<Canceler>();
+  Canceler canceler;
 
   auto p = post(ios, []() {
     return success<int>(10);
@@ -99,7 +98,7 @@ BOOST_AUTO_TEST_CASE(fail1) {
 BOOST_AUTO_TEST_CASE(fail2) {
   asio::io_service ios;
 
-  CancelerPtr canceler = make_shared<Canceler>();
+  Canceler canceler;
 
   auto p = post(ios, []() {
     return success<int>(10);
@@ -131,7 +130,7 @@ BOOST_AUTO_TEST_CASE(fail2) {
 BOOST_AUTO_TEST_CASE(canceling) {
   asio::io_service ios;
 
-  CancelerPtr canceler = make_shared<Canceler>();
+  Canceler canceler;
 
   bool first_executed  = false;
   bool second_executed = false;
@@ -157,7 +156,7 @@ BOOST_AUTO_TEST_CASE(canceling) {
   int poll_count = 0;
 
   while(ios.poll_one()) {
-    canceler->cancel();
+    canceler.cancel();
     ++poll_count;
   }
 

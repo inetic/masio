@@ -4,7 +4,6 @@
 namespace masio {
 
 template<class H, class A> struct Sleep  {
-  using CancelerPtr = std::shared_ptr<Canceler>;
   using value_type  = A;
 
   Sleep(boost::asio::io_service& ios, unsigned int millis, const H& h)
@@ -14,7 +13,7 @@ template<class H, class A> struct Sleep  {
   {}
 
   template<class Rest>
-  void run(const CancelerPtr& canceler, const Rest& rest) const {
+  void run(Canceler& canceler, const Rest& rest) const {
     using namespace std;
     using namespace boost::asio;
     using namespace boost::posix_time;
@@ -26,11 +25,11 @@ template<class H, class A> struct Sleep  {
         timer->cancel();
         });
 
-    canceler->link_cancel_action(*cancel_action);
+    canceler.link_cancel_action(*cancel_action);
 
     auto h = _handler;
 
-    timer->async_wait([h, canceler, rest, timer, cancel_action]
+    timer->async_wait([h, &canceler, rest, timer, cancel_action]
           (const error_code& error){
 
         cancel_action->unlink();
@@ -38,7 +37,7 @@ template<class H, class A> struct Sleep  {
         if (error) {
           rest(typename Error<A>::Fail{error});
         }
-        else if (canceler->canceled()) {
+        else if (canceler.canceled()) {
           rest(typename Error<A>::Fail{error::operation_aborted});
         }
         else {

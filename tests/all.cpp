@@ -11,7 +11,6 @@ using namespace masio;
 using namespace std;
 namespace asio = boost::asio;
 using namespace std::chrono;
-typedef shared_ptr<Canceler> CancelerPtr;
 
 //------------------------------------------------------------------------------
 system_clock::time_point now() { return system_clock::now(); }
@@ -29,7 +28,7 @@ std::ostream& operator<<(std::ostream& os, const system_clock::time_point& t) {
 BOOST_AUTO_TEST_CASE(test_all) {
   asio::io_service ios;
 
-  CancelerPtr canceler = make_shared<Canceler>();
+  Canceler canceler;
 
   auto p1 = post(ios, []() { return success(11); });
   auto p2 = post(ios, []() { return success(22); });
@@ -68,7 +67,7 @@ BOOST_AUTO_TEST_CASE(test_all) {
 BOOST_AUTO_TEST_CASE(test_all_sleep) {
   asio::io_service ios;
 
-  CancelerPtr canceler = make_shared<Canceler>();
+  Canceler canceler;
 
   typedef system_clock::time_point Time;
 
@@ -125,15 +124,15 @@ BOOST_AUTO_TEST_CASE(test_all_sleep) {
 BOOST_AUTO_TEST_CASE(test_all_sleep_and_cancel) {
   asio::io_service ios;
 
-  CancelerPtr canceler = make_shared<Canceler>();
+  Canceler canceler;
 
   typedef system_clock::time_point Time;
 
   unsigned int duration0 = 123;
   unsigned int duration1 = 234;
 
-  auto p0 = sleep(ios, duration0, [canceler]() {
-      canceler->cancel();
+  auto p0 = sleep(ios, duration0, [&canceler]() {
+      canceler.cancel();
       return success(now());
       });
 
@@ -183,16 +182,16 @@ BOOST_AUTO_TEST_CASE(test_all_sleep_and_cancel) {
 BOOST_AUTO_TEST_CASE(test_all_sleep_and_cancel_subcancelers) {
   asio::io_service ios;
 
-  CancelerPtr canceler    = make_shared<Canceler>();
-  CancelerPtr p1_canceler = make_shared<Canceler>();
+  Canceler canceler;
+  Canceler p1_canceler;
 
   typedef system_clock::time_point Time;
 
   unsigned int duration0 = 123;
   unsigned int duration1 = 234;
 
-  auto p0 = sleep(ios, duration0, [p1_canceler]() {
-      p1_canceler->cancel();
+  auto p0 = sleep(ios, duration0, [&p1_canceler]() {
+      p1_canceler.cancel();
       return success(now());
       })
       >= [](Time t) { return success(t); };
