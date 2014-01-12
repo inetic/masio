@@ -162,3 +162,39 @@ BOOST_AUTO_TEST_CASE(canceling) {
 }
 
 //------------------------------------------------------------------------------
+BOOST_AUTO_TEST_CASE(forever_test) {
+  asio::io_service ios;
+
+  Canceler canceler;
+
+  unsigned int call_count = 0;
+
+  auto p = post(ios)
+        >= [&call_count](none_t) {
+             call_count++;
+             return success(none);
+           };
+
+  bool executed = false;
+
+  forever(p).run(canceler, [&executed](Error<none_t> i) {
+     executed = true;
+     BOOST_REQUIRE(i.is_error());
+     });
+
+  int poll_count = 0;
+
+  while(ios.poll_one()) {
+    ++poll_count;
+
+    if (poll_count == 5) {
+      canceler.cancel();
+    }
+  }
+
+  BOOST_REQUIRE(executed);
+  BOOST_REQUIRE_EQUAL(poll_count, 6);
+  BOOST_REQUIRE_EQUAL(call_count, 5);
+}
+
+//------------------------------------------------------------------------------

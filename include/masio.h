@@ -23,6 +23,15 @@ using boost::none_t;
 #include <masio/all.h>
 #include <masio/with_canceler.h>
 
+namespace masio {
+
+template<typename MA>
+task<typename MA::value_type> forever(const MA& ma) {
+  using A = typename MA::value_type;
+  return ma >= [ma](const A& a) { return forever(ma); };
+}
+
+} // masio namespace
 
 #endif // ifndef __MASIO_H__
 
