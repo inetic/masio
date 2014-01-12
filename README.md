@@ -32,11 +32,8 @@ The StateT is something I'm not sure about as it is not pure: the cancelation st
            >= [](Time t) { return success(t); };
 
     auto p1 = with_canceler( p1_canceler
-                           , wait(ios, duration1)
-                            >= [](none_t) {
-                              return success<Time>(now());
-                            })
-      >= [](Time t) { return success(t); };
+                           , wait(ios, duration1) >> success<Time>(now()))
+           >= [](Time t) { return success(t); };
       
     auto p = all<Time>(p0, p1);
 

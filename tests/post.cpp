@@ -16,9 +16,7 @@ BOOST_AUTO_TEST_CASE(zero_binds_one_post) {
 
   Canceler canceler;
 
-  auto p = post(ios, []() {
-    return success(10);
-  });
+  auto p = post(ios) >> success(10);
 
   p.run(canceler, [](Error<int> i) {
      BOOST_REQUIRE(!i.is_error());
@@ -38,15 +36,14 @@ BOOST_AUTO_TEST_CASE(binds_and_posts) {
 
   Canceler canceler;
 
-  auto p = post(ios, []() {
-    return success(10);
-  })
-  >= [&ios](int a) {
-    return post(ios, [a]() { return success(2*a + 1); });
-  }
-  >= [](float a) {
-      return success<int>(a+2);
-  };
+  auto p = post(ios)
+        >> success(10)
+        >= [&ios](int a) {
+          return post(ios) >> success(2*a + 1);
+        }
+        >= [](float a) {
+            return success<int>(a+2);
+        };
 
   p.run(canceler, [](Error<int> i) {
      BOOST_REQUIRE(!i.is_error());
@@ -71,15 +68,14 @@ BOOST_AUTO_TEST_CASE(fail1) {
 
   Canceler canceler;
 
-  auto p = post(ios, []() {
-    return success<int>(10);
-  })
-  >= [&ios](int a) {
-    return fail<float>(operation_aborted);
-  }
-  >= [](float a) {
-      return success<int>(a+2);
-  };
+  auto p = post(ios)
+        >> success<int>(10)
+        >= [&ios](int a) {
+          return fail<float>(operation_aborted);
+        }
+        >= [](float a) {
+            return success<int>(a+2);
+        };
 
   p.run(canceler, [](Error<int> i) {
      BOOST_REQUIRE(i.is_error());
@@ -100,17 +96,14 @@ BOOST_AUTO_TEST_CASE(fail2) {
 
   Canceler canceler;
 
-  auto p = post(ios, []() {
-    return success<int>(10);
-  })
-  >= [&ios](int a) {
-    return post(ios, [a]() {
-      return success<float>(2*a + 1);
-    });
-  }
-  >= [](float a) {
-    return fail<int>(asio::error::operation_aborted);
-  };
+  auto p = post(ios)
+        >> success<int>(10)
+        >= [&ios](int a) {
+          return post(ios) >> success<float>(2*a + 1);
+        }
+        >= [](float a) {
+          return fail<int>(asio::error::operation_aborted);
+        };
 
   p.run(canceler, [](Error<int> i) {
      BOOST_REQUIRE(i.is_error());
@@ -135,16 +128,18 @@ BOOST_AUTO_TEST_CASE(canceling) {
   bool first_executed  = false;
   bool second_executed = false;
 
-  auto p = post(ios, [&first_executed]() {
-    first_executed = true;
-    return success<int>(10);
-  })
-  >= [&second_executed, &ios](int a) {
-    return post(ios, [a, &second_executed]() {
-      second_executed = true;
-      return success<float>(2*a + 1);
-      });
-  };
+  auto p = post(ios)
+        >= [&first_executed](none_t) {
+             first_executed = true;
+             return success<int>(10);
+           }
+        >= [&second_executed, &ios](int a) {
+           return post(ios)
+               >= [a, &second_executed](none_t) {
+                    second_executed = true;
+                    return success<float>(2*a + 1);
+                  };
+        };
 
   bool executed = false;
 

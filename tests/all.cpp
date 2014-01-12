@@ -30,8 +30,8 @@ BOOST_AUTO_TEST_CASE(test_all) {
 
   Canceler canceler;
 
-  auto p1 = post(ios, []() { return success(11); });
-  auto p2 = post(ios, []() { return success(22); });
+  auto p1 = post(ios) >> success(11);
+  auto p2 = post(ios) >> success(22);
 
   auto p = all(p1, p2);
 
