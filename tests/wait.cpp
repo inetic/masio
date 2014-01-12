@@ -31,8 +31,7 @@ BOOST_AUTO_TEST_CASE(test_wait) {
     return success<int>(10);
   })
   >= [&ios, wait_duration](int a) {
-    return masio::wait(ios, wait_duration)
-        >= [a](none_t) { return success(2*a + 1.6); };
+    return masio::wait(ios, wait_duration) >> success(2*a + 1.6);
   }
   >= [](float a) {
       return success<int>(a*2);
@@ -68,7 +67,7 @@ BOOST_AUTO_TEST_CASE(test_cancel_wait) {
   })
   >= [&ios, wait_duration](int a) {
     return masio::wait(ios, wait_duration)
-        >= [a](none_t) { return success<float>(2*a + 1); };
+        >> success<float>(2*a + 1);
   }
   >= [](float a) {
       return success<int>(a+2);
@@ -106,7 +105,7 @@ BOOST_AUTO_TEST_CASE(test_wait_and_may_fail) {
   })
   >= [&ios, wait_duration](int a) {
     return may_fail(masio::wait(ios, wait_duration)
-                    >= [a](none_t) { return success<int>(2*a + 1); });
+                    >> success<int>(2*a + 1));
   };
 
   auto start = now();
@@ -140,7 +139,7 @@ BOOST_AUTO_TEST_CASE(test_cancel_wait_and_may_fail) {
   })
   >= [&ios, wait_duration](int a) {
     return may_fail(masio::wait(ios, wait_duration)
-                 >= [a](none_t) { return success<int>(2*a + 1); });
+                    >> success<int>(2*a + 1));
   };
 
   auto start = now();
