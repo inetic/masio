@@ -30,8 +30,8 @@ BOOST_AUTO_TEST_CASE(test_all) {
 
   Canceler canceler;
 
-  auto p1 = post(ios) >> success(11);
-  auto p2 = post(ios) >> success(22);
+  auto p1 = post(ios) > success(11);
+  auto p2 = post(ios) > success(22);
 
   auto p = all(p1, p2);
 
@@ -199,7 +199,7 @@ BOOST_AUTO_TEST_CASE(test_all_wait_and_pause) {
             };
 
   auto p1 = pause(ios, kick)
-         >> wait(ios, duration1)
+          > wait(ios, duration1)
          >= [](none_t) {
            return success(now());
          };

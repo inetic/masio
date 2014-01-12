@@ -28,10 +28,10 @@ BOOST_AUTO_TEST_CASE(test_wait) {
   Canceler canceler;
 
   auto p = post(ios)
-        >> success<int>(10)
+         > success<int>(10)
         >= [&ios, wait_duration](int a) {
           return masio::wait(ios, wait_duration)
-              >> success(2*a + 1.6);
+               > success(2*a + 1.6);
         }
         >= [](float a) {
           return success<int>(a*2);
@@ -63,10 +63,10 @@ BOOST_AUTO_TEST_CASE(test_cancel_wait) {
   unsigned int wait_duration = 10*1000; // Ten seconds
 
   auto p = post(ios)
-        >> success<int>(10)
+         > success<int>(10)
         >= [&ios, wait_duration](int a) {
           return masio::wait(ios, wait_duration)
-              >> success<float>(2*a + 1);
+               > success<float>(2*a + 1);
         }
         >= [](float a) {
             return success<int>(a+2);
@@ -100,10 +100,10 @@ BOOST_AUTO_TEST_CASE(test_wait_and_may_fail) {
   unsigned int wait_duration = 100; // Milliseconds
 
   auto p = post(ios)
-        >> success<int>(10)
+         > success<int>(10)
         >= [&ios, wait_duration](int a) {
           return may_fail(masio::wait(ios, wait_duration)
-                          >> success<int>(2*a + 1));
+                           > success<int>(2*a + 1));
         };
 
   auto start = now();
@@ -133,10 +133,10 @@ BOOST_AUTO_TEST_CASE(test_cancel_wait_and_may_fail) {
   unsigned int wait_duration = 10*1000; // Ten seconds
 
   auto p = post(ios)
-        >> success<int>(10)
+         > success<int>(10)
         >= [&ios, wait_duration](int a) {
           return may_fail(masio::wait(ios, wait_duration)
-                          >> success<int>(2*a + 1));
+                           > success<int>(2*a + 1));
         };
 
   auto start = now();

@@ -50,7 +50,7 @@ masio::Bind<MA, MB> operator>=(const MA& ma, const F& f) {
 
 template< typename MA
         , typename MB>
-masio::Bind<MA, MB> operator>>(const MA& ma, const MB& mb) {
+masio::Bind<MA, MB> operator>(const MA& ma, const MB& mb) {
   using A = typename MA::value_type;
   return masio::Bind<MA, MB>(ma, [mb](const A&) { return mb; });
 }

@@ -73,7 +73,7 @@ BOOST_AUTO_TEST_CASE(test_connect_accept) {
   unsigned short port = 9090;
 
   auto p1 = wait(ios, 100)
-         >> resolve(ios, "localhost", port)
+          > resolve(ios, "localhost", port)
          >= [&client](tcp::resolver::iterator i) {
               return connect(client, i);
             };
@@ -129,7 +129,7 @@ BOOST_AUTO_TEST_CASE(test_cancel_connect_accept) {
                    canceler.cancel();
                    return success(none);
                  })
-         >> success(none);
+          > success(none);
 
   auto p = resolve(ios, "localhost", port)
         >= [&client, p2](iterator i) {
@@ -179,13 +179,13 @@ BOOST_AUTO_TEST_CASE(test_send_receive) {
   std::string rx_buffer = "XXXXX";
 
   auto p1 = accept(server, port)
-         >> send(server, buffer(tx_buffer, tx_buffer.size()));
+          > send(server, buffer(tx_buffer, tx_buffer.size()));
 
   auto p2 = (resolve(ios, "localhost", port)
          >= [&client](tcp::resolver::iterator i) {
               return connect(client, i);
             })
-         >> receive(client, buffer(&rx_buffer[0], rx_buffer.size()));
+          > receive(client, buffer(&rx_buffer[0], rx_buffer.size()));
 
   auto p = all(p1, p2);
 

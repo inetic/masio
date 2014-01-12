@@ -16,7 +16,7 @@ BOOST_AUTO_TEST_CASE(zero_binds_one_post) {
 
   Canceler canceler;
 
-  auto p = post(ios) >> success(10);
+  auto p = post(ios) > success(10);
 
   p.run(canceler, [](Error<int> i) {
      BOOST_REQUIRE(!i.is_error());
@@ -37,9 +37,9 @@ BOOST_AUTO_TEST_CASE(binds_and_posts) {
   Canceler canceler;
 
   auto p = post(ios)
-        >> success(10)
+         > success(10)
         >= [&ios](int a) {
-          return post(ios) >> success(2*a + 1);
+          return post(ios)  > success(2*a + 1);
         }
         >= [](float a) {
             return success<int>(a+2);
@@ -69,7 +69,7 @@ BOOST_AUTO_TEST_CASE(fail1) {
   Canceler canceler;
 
   auto p = post(ios)
-        >> success<int>(10)
+         > success<int>(10)
         >= [&ios](int a) {
           return fail<float>(operation_aborted);
         }
@@ -97,9 +97,9 @@ BOOST_AUTO_TEST_CASE(fail2) {
   Canceler canceler;
 
   auto p = post(ios)
-        >> success<int>(10)
+         > success<int>(10)
         >= [&ios](int a) {
-          return post(ios) >> success<float>(2*a + 1);
+          return post(ios) > success<float>(2*a + 1);
         }
         >= [](float a) {
           return fail<int>(asio::error::operation_aborted);
