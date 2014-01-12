@@ -16,8 +16,8 @@ template<class A> struct Error
   typedef boost::system::error_code     ErrorCode;
 
   Error() {}
-  Error(const Success& a) : s(a), is_success(true)  {}
-  Error(const Fail&    a) : f(a), is_success(false) {}
+  Error(const Success& a) : _is_value(true) { new (&_value) A(a.value); }
+  Error(const Fail&    a) : _is_value(false), _e(a.value) {}
 
   bool is_error() const;
   bool is_value() const;
@@ -28,37 +28,46 @@ template<class A> struct Error
   const A& operator*() const  { return value(); }
   const A* operator->() const { return &value(); }
 
+  ~Error() {
+    if (_is_value) {
+      reinterpret_cast<A&>(_value).~A();
+    }
+  }
 private:
-  union {
-    Success s;
-    Fail    f;
-  };
+  typedef typename std::aligned_storage<
+    sizeof(A),
+    std::alignment_of<A>::value>::type storage;
 
-  bool is_success;
+  bool _is_value;
+
+  union {
+    storage   _value;
+    ErrorCode _e;
+  };
 };
 
 template<class A>
 bool Error<A>::is_error() const {
-  if (!is_success) {
-    return f.value != ErrorCode(); // ErrorCode() means success.
+  if (!_is_value) {
+    return _e != ErrorCode(); // ErrorCode() means success.
   }
   return false;
 }
 
 template<class A>
 bool Error<A>::is_value() const {
-  return is_success;
+  return _is_value;
 }
 
 template<class A>
 const A& Error<A>::value() const {
-  return s.value;
+  return reinterpret_cast<const A&>(_value);
 }
 
 template<class A>
 typename Error<A>::ErrorCode Error<A>::error() const {
   if (!is_error()) { return ErrorCode(); }
-  return f.value;
+  return _e;
 }
 
 } // masio namespace

@@ -12,23 +12,7 @@ using namespace std;
 namespace asio = boost::asio;
 using namespace std::chrono;
 using tcp = asio::ip::tcp;
-
-//------------------------------------------------------------------------------
-system_clock::time_point now() { return system_clock::now(); }
-
-std::ostream& operator<<(std::ostream& os, const system_clock::time_point& t) {
-  return os << t.time_since_epoch() / seconds(1);
-}
-
-//------------------------------------------------------------------------------
-// TODO
-tcp::resolver::iterator resolve( boost::asio::io_service& ios
-                               , const std::string& host
-                               , unsigned short port) {
-  tcp::resolver resolver(ios);
-  tcp::resolver::query query(host, to_string(port));
-  return resolver.resolve(query);
-}
+using iterator = tcp::resolver::iterator;
 
 //------------------------------------------------------------------------------
 BOOST_AUTO_TEST_CASE(test_accept_connect) {
@@ -42,7 +26,10 @@ BOOST_AUTO_TEST_CASE(test_accept_connect) {
   unsigned short port = 9090;
 
   auto p1 = accept(server, port);
-  auto p2 = connect(client, resolve(ios, "localhost", port));
+  auto p2 = resolve(ios, "localhost", port)
+         >= [&client](tcp::resolver::iterator i) {
+              return connect(client, i);
+            };
 
   auto p = all(p1, p2);
 
@@ -70,7 +57,7 @@ BOOST_AUTO_TEST_CASE(test_accept_connect) {
   }
 
   BOOST_REQUIRE(executed);
-  BOOST_REQUIRE_EQUAL(poll_count, 2);
+  BOOST_REQUIRE_EQUAL(poll_count, 3);
 }
 
 //------------------------------------------------------------------------------
@@ -85,7 +72,11 @@ BOOST_AUTO_TEST_CASE(test_connect_accept) {
 
   unsigned short port = 9090;
 
-  auto p1 = wait(ios, 100) >> connect(client, resolve(ios, "localhost", port));
+  auto p1 = wait(ios, 100)
+         >> resolve(ios, "localhost", port)
+         >= [&client](tcp::resolver::iterator i) {
+              return connect(client, i);
+            };
   auto p2 = accept(server, port);
 
   auto p = all(p1, p2);
@@ -114,13 +105,14 @@ BOOST_AUTO_TEST_CASE(test_connect_accept) {
   }
 
   BOOST_REQUIRE(executed);
-  BOOST_REQUIRE_EQUAL(poll_count, 3);
+  BOOST_REQUIRE_EQUAL(poll_count, 4);
 }
 
 //------------------------------------------------------------------------------
 BOOST_AUTO_TEST_CASE(test_cancel_connect_accept) {
   using masio::accept;
   using masio::wait;
+  using iterator = tcp::resolver::iterator;
 
   asio::io_service ios;
 
@@ -131,7 +123,6 @@ BOOST_AUTO_TEST_CASE(test_cancel_connect_accept) {
 
   Canceler canceler;
 
-  auto p1 = connect(client, resolve(ios, "localhost", port));
   auto p2 = all( accept(server, port)
                , wait(ios, 100)
                  >= [&canceler](none_t) {
@@ -140,7 +131,10 @@ BOOST_AUTO_TEST_CASE(test_cancel_connect_accept) {
                  })
          >> success(none);
 
-  auto p = all(p1, p2);
+  auto p = resolve(ios, "localhost", port)
+        >= [&client, p2](iterator i) {
+            return all(connect(client, i), p2);
+           };
 
   bool executed = false;
 
@@ -165,7 +159,7 @@ BOOST_AUTO_TEST_CASE(test_cancel_connect_accept) {
   }
 
   BOOST_REQUIRE(executed);
-  BOOST_REQUIRE_EQUAL(poll_count, 3);
+  BOOST_REQUIRE_EQUAL(poll_count, 4);
 }
 
 //------------------------------------------------------------------------------
@@ -187,7 +181,10 @@ BOOST_AUTO_TEST_CASE(test_send_receive) {
   auto p1 = accept(server, port)
          >> send(server, buffer(tx_buffer, tx_buffer.size()));
 
-  auto p2 = connect(client, resolve(ios, "localhost", port))
+  auto p2 = (resolve(ios, "localhost", port)
+         >= [&client](tcp::resolver::iterator i) {
+              return connect(client, i);
+            })
          >> receive(client, buffer(&rx_buffer[0], rx_buffer.size()));
 
   auto p = all(p1, p2);
@@ -218,6 +215,6 @@ BOOST_AUTO_TEST_CASE(test_send_receive) {
   }
 
   BOOST_REQUIRE(executed);
-  BOOST_REQUIRE_EQUAL(poll_count, 4);
+  BOOST_REQUIRE_EQUAL(poll_count, 5);
 }
 

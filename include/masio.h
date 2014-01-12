@@ -24,6 +24,7 @@ using boost::none_t;
 #include <masio/all.h>
 #include <masio/with_canceler.h>
 
+#include <masio/resolve.h>
 #include <masio/connect.h>
 #include <masio/accept.h>
 #include <masio/send.h>
