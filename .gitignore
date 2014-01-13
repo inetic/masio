@@ -6,3 +6,4 @@ tests/post
 tests/wait
 tests/all
 tests/socket_io
+examples/chat_client
