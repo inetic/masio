@@ -120,10 +120,10 @@ BOOST_AUTO_TEST_CASE(fail0) {
 }
 
 //------------------------------------------------------------------------------
-BOOST_AUTO_TEST_CASE(store_in_task_zero_binds) {
+BOOST_AUTO_TEST_CASE(store_in_action_zero_binds) {
   Canceler canceler;
 
-  task<int> p = success<int>(10);
+  action<int> p = success<int>(10);
 
   bool executed = false;
 
@@ -137,11 +137,11 @@ BOOST_AUTO_TEST_CASE(store_in_task_zero_binds) {
 }
 
 //------------------------------------------------------------------------------
-BOOST_AUTO_TEST_CASE(store_in_task_one_bind) {
+BOOST_AUTO_TEST_CASE(store_in_action_one_bind) {
   Canceler canceler;
 
-  task<int> p1 = success<int>(10);
-  task<int> p2 = p1 >= [](int i) { return success(i+1); };
+  action<int> p1 = success<int>(10);
+  action<int> p2 = p1 >= [](int i) { return success(i+1); };
 
   bool executed = false;
 
@@ -155,10 +155,10 @@ BOOST_AUTO_TEST_CASE(store_in_task_one_bind) {
 }
 
 //------------------------------------------------------------------------------
-BOOST_AUTO_TEST_CASE(store_in_task_one_bind_one_var) {
+BOOST_AUTO_TEST_CASE(store_in_action_one_bind_one_var) {
   Canceler canceler;
 
-  task<int> p = success(10) >= [](int i) { return success(i+1); };
+  action<int> p = success(10) >= [](int i) { return success(i+1); };
 
   bool executed = false;
 
@@ -172,12 +172,12 @@ BOOST_AUTO_TEST_CASE(store_in_task_one_bind_one_var) {
 }
 
 //------------------------------------------------------------------------------
-BOOST_AUTO_TEST_CASE(store_in_task_two_binds) {
+BOOST_AUTO_TEST_CASE(store_in_action_two_binds) {
   Canceler canceler;
 
-  task<int> p1 = success<int>(10);
-  task<int> p2 = p1 >= [](int i) { return success(i+1); };
-  task<int> p3 = p2 >= [](int i) { return success(i+1); };
+  action<int> p1 = success<int>(10);
+  action<int> p2 = p1 >= [](int i) { return success(i+1); };
+  action<int> p3 = p2 >= [](int i) { return success(i+1); };
 
   bool executed = false;
 

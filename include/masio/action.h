@@ -1,9 +1,9 @@
-#ifndef __MASIO_TASK_H__
-#define __MASIO_TASK_H__
+#ifndef __MASIO_ACTION_H__
+#define __MASIO_ACTION_H__
 
 namespace masio {
 
-template<typename A> struct task : monad<task<A>, A> {
+template<typename A> struct action : monad<action<A>, A> {
   using   value_type = A;
   typedef std::function<void(Error<value_type>)> Rest;
 
@@ -22,7 +22,7 @@ template<typename A> struct task : monad<task<A>, A> {
   };
 
   template<typename Delegate>
-  task(const Delegate& delegate)
+  action(const Delegate& delegate)
     : _delegate(std::make_shared<wrapper<Delegate>>(delegate))
   {}
 
@@ -37,5 +37,5 @@ private:
 
 } // masio namespace
 
-#endif // ifndef __MASIO_TASK_H__
+#endif // ifndef __MASIO_ACTION_H__
 

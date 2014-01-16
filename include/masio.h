@@ -17,7 +17,7 @@ using boost::none_t;
 #include <masio/error.h>
 #include <masio/bind.h>
 #include <masio/return.h>
-#include <masio/task.h>
+#include <masio/action.h>
 #include <masio/post.h>
 #include <masio/fail.h>
 #include <masio/wait.h>
@@ -35,7 +35,7 @@ using boost::none_t;
 namespace masio {
 
 template<typename MA>
-task<typename MA::value_type> forever(const MA& ma) {
+action<typename MA::value_type> forever(const MA& ma) {
   using A = typename MA::value_type;
   return ma >= [ma](const A&) { return forever(ma); };
 }

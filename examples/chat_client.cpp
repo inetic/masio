@@ -41,7 +41,7 @@ struct chat_client {
   kicker          kick;
 };
 
-task<none_t> receive_message(chat_client& c) {
+action<none_t> receive_message(chat_client& c) {
   auto& socket = c.socket;
   auto& m      = c.inbound_message;
 
@@ -61,7 +61,7 @@ task<none_t> receive_message(chat_client& c) {
          }; 
 }
 
-task<none_t> send_message(chat_client& c) {
+action<none_t> send_message(chat_client& c) {
   using masio::pause;
   using boost::asio::buffer;
 
@@ -70,7 +70,7 @@ task<none_t> send_message(chat_client& c) {
   auto& ios    = socket.get_io_service();
 
   return success(none)
-      >= [&socket, &c, &ms, &ios](none_t) -> task<none_t> {
+      >= [&socket, &c, &ms, &ios](none_t) -> action<none_t> {
            if (ms.empty()) {
              return pause(ios, c.kick);
            }
