@@ -22,11 +22,6 @@ struct send_task : monad<send_task<ConstBufferSequence>, none_t> {
     using Success = typename Error<value_type>::Success;
     using Fail    = typename Error<value_type>::Fail;
 
-    if (canceler.canceled()) {
-      socket.get_io_service().post([rest]() { rest(Fail{operation_aborted});});
-      return;
-    }
-
     auto& s = socket;
 
     auto cancel_action = make_shared<Canceler::CancelAction>([&s]() {

@@ -25,33 +25,28 @@ public:
     using namespace boost::asio;
     using namespace boost::posix_time;
 
-    if (!canceler.canceled()) {
-      auto timer = make_shared<deadline_timer>(_io_service, _time);
+    auto timer = make_shared<deadline_timer>(_io_service, _time);
 
-      auto cancel_action = make_shared<Canceler::CancelAction>([timer]() {
-          timer->cancel();
-          });
-
-      canceler.link_cancel_action(*cancel_action);
-
-      timer->async_wait([&canceler, rest, timer, cancel_action]
-                        (const error_code& error){
-          cancel_action->unlink();
-
-          if (error) {
-            rest(Fail{error});
-          }
-          else if (canceler.canceled()) {
-            rest(Fail{error::operation_aborted});
-          }
-          else {
-            rest(Success{none});
-          }
+    auto cancel_action = make_shared<Canceler::CancelAction>([timer]() {
+        timer->cancel();
         });
-    }
-    else {
-      _io_service.post([rest](){ rest(Fail{error::operation_aborted}); });
-    }
+
+    canceler.link_cancel_action(*cancel_action);
+
+    timer->async_wait([&canceler, rest, timer, cancel_action]
+                      (const error_code& error){
+        cancel_action->unlink();
+
+        if (error) {
+          rest(Fail{error});
+        }
+        else if (canceler.canceled()) {
+          rest(Fail{error::operation_aborted});
+        }
+        else {
+          rest(Success{none});
+        }
+      });
   }
 
 private:

@@ -49,6 +49,8 @@ struct pause : monad<pause, none_t> {
           ios_ptr->post([rest]() { rest(Fail{operation_aborted}); });
         });
 
+    canceler.link_cancel_action(*cancel_action);
+
     kick.rest = [rest, cancel_action, ios_ptr, &canceler]() {
         cancel_action->unlink();
 

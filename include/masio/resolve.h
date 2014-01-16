@@ -33,11 +33,6 @@ struct resolve : monad<resolve, boost::asio::ip::tcp::resolver::iterator> {
     using Success = typename Error<value_type>::Success;
     using Fail    = typename Error<value_type>::Fail;
 
-    if (canceler.canceled()) {
-      //io_service.post([rest]() { rest(Fail{operation_aborted});});
-      return;
-    }
-
     auto resolver = make_shared<tcp::resolver>(io_service);
 
     auto cancel_action = make_shared<CancelAction>([resolver]() {

@@ -23,11 +23,6 @@ struct accept : monad<accept, none_t> {
 
     auto& ios = socket.get_io_service();
 
-    if (canceler.canceled()) {
-      ios.post([rest]() { rest(Fail{operation_aborted});});
-      return;
-    }
-
     auto acceptor = make_shared<tcp::acceptor>(ios, endpoint);
 
     auto cancel_action = make_shared<Canceler::CancelAction>([acceptor]() {
