@@ -42,9 +42,13 @@ public:
 
     _canceled = true;
 
-    for (auto& c : _cancel_actions) {
-      c.cancel();
+    for (auto i = _cancel_actions.begin(); i != _cancel_actions.end();) {
+      auto j = i; ++i;
+      auto cancel = j->cancel;
+      cancel();
     }
+
+    _cancel_actions.clear();
 
     for (auto& c : _children) {
       c.cancel();
