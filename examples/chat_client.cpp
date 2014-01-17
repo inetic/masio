@@ -101,9 +101,9 @@ int main(int argc, char* argv[]) {
                    return connect(c.socket, iterator);
                  }
               >= [&](none_t) {
-                   return all( forever(receive_message(c))
-                             , forever(send_message(c)))
-                            > success(none);
+                   return all_or_none( forever(receive_message(c))
+                                     , forever(send_message(c)))
+                        > success(none);
                  };
 
   Canceler canceler;

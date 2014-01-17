@@ -24,6 +24,7 @@ using boost::none_t;
 #include <masio/pause.h>
 #include <masio/may_fail.h>
 #include <masio/all.h>
+#include <masio/all_or_none.h>
 #include <masio/with_canceler.h>
 
 #include <masio/resolve.h>

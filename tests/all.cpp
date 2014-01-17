@@ -9,6 +9,7 @@
 //------------------------------------------------------------------------------
 using namespace masio;
 using namespace std;
+using namespace boost::asio::error;
 namespace asio = boost::asio;
 using namespace std::chrono;
 
@@ -163,6 +164,63 @@ BOOST_AUTO_TEST_CASE(test_all_wait_and_cancel) {
      REQUIRE_DURATION(t0 - start, duration0);
      REQUIRE_DURATION(end - start, min(duration0, duration1));
      BOOST_REQUIRE_EQUAL(e, asio::error::operation_aborted);
+
+     executed = true;
+     });
+
+  int poll_count = 0;
+
+  while(ios.run_one()) {
+    ++poll_count;
+  }
+
+  BOOST_REQUIRE(executed);
+  BOOST_REQUIRE_EQUAL(poll_count, 2);
+}
+
+//--------------------------------------------------------------------
+BOOST_AUTO_TEST_CASE(test_all_or_none_wait_and_fail) {
+  using masio::wait;
+
+  asio::io_service ios;
+
+  Canceler canceler;
+
+  typedef system_clock::time_point Time;
+
+  unsigned int duration0 = 123;
+  unsigned int duration1 = 234;
+
+  auto p0 = wait(ios, duration0)
+         >= [&canceler](none_t) { return fail<Time>(fault); };
+
+  auto p1 = wait(ios, duration1)
+         >= [](none_t) { return success(now()); };
+
+  auto p = all_or_none(p0, p1);
+
+  bool executed = false;
+
+  auto start = now();
+
+  using Results = std::pair<Error<Time>, Error<Time>>;
+
+  p.run(canceler, [&executed, start, duration0, duration1]
+                  (Error<Results> ers) {
+     BOOST_REQUIRE(!ers.is_error());
+
+     const Results& rs = *ers;
+
+     BOOST_REQUIRE(rs.first.is_error());
+     BOOST_REQUIRE(rs.second.is_error());
+
+     auto end = now();
+     auto e0  = rs.first.error();
+     auto e1  = rs.second.error();
+
+     REQUIRE_DURATION(end - start, min(duration0, duration1));
+     BOOST_REQUIRE_EQUAL(e0, fault);
+     BOOST_REQUIRE_EQUAL(e1, operation_aborted);
 
      executed = true;
      });
