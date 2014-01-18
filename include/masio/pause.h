@@ -34,7 +34,7 @@ struct pause : monad<pause, none_t> {
     , kick(kick) {}
 
   template<class Rest>
-  void run(Canceler& canceler, const Rest& rest) const {
+  void execute(Canceler& canceler, const Rest& rest) const {
     using namespace std;
     using namespace boost::asio::error;
     using Fail = Error<none_t>::Fail;

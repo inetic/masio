@@ -28,7 +28,7 @@ auto program = resolve(ios, host_string, port_string)
                                    , send(socket, buffer(...)));
                };
 
-program.run(canceler, [](Error<none_t> result) {
+program.execute(canceler, [](Error<none_t> result) {
   ... // The action ended, handle it here.
   });
 

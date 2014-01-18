@@ -19,7 +19,7 @@ public:
   {}
 
   template<typename Rest>
-  void run(Canceler& canceler, const Rest& rest) const {
+  void execute(Canceler& canceler, const Rest& rest) const {
     using namespace std;
     using error_code = boost::system::error_code;
     using Success = typename Error<value_type>::Success;
@@ -35,7 +35,7 @@ public:
 
     auto data = make_shared<Data>();
 
-    ma.run(canceler, [data, &canceler, rest](const Error<A>& ea) {
+    ma.execute(canceler, [data, &canceler, rest](const Error<A>& ea) {
         data->results.first = ea;
 
         if (ea.is_error() && !data->first_error) {
@@ -48,7 +48,7 @@ public:
         }
         });
 
-    mb.run(canceler, [data, &canceler, rest](const Error<B>& eb) {
+    mb.execute(canceler, [data, &canceler, rest](const Error<B>& eb) {
         data->results.second = eb;
 
         if (eb.is_error() && !data->first_error) {

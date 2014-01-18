@@ -14,7 +14,7 @@ struct send_task : monad<send_task<ConstBufferSequence>, none_t> {
   {}
 
   template<class Rest>
-  void run(Canceler& canceler, const Rest& rest) const {
+  void execute(Canceler& canceler, const Rest& rest) const {
     using namespace std;
     using namespace boost::asio;
     using namespace boost::asio::error;

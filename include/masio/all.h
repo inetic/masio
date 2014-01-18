@@ -18,21 +18,21 @@ public:
   {}
 
   template<typename Rest>
-  void run(Canceler& canceler, const Rest& rest) const {
+  void execute(Canceler& canceler, const Rest& rest) const {
     using namespace std;
     using Success = typename Error<value_type>::Success;
 
     auto remaining = make_shared<size_t>(2);
     auto results   = make_shared<value_type>();
 
-    ma.run(canceler, [remaining, results, rest](const Error<A>& ea) {
+    ma.execute(canceler, [remaining, results, rest](const Error<A>& ea) {
         results->first = ea;
         if(--*remaining == 0) {
           rest(Success{*results});
         }
         });
 
-    mb.run(canceler, [remaining, results, rest](const Error<B>& eb) {
+    mb.execute(canceler, [remaining, results, rest](const Error<B>& eb) {
         results->second = eb;
         if(--*remaining == 0) {
           rest(Success{*results});

@@ -20,17 +20,17 @@ template<class MA, class MB> struct Bind
 
   // [s -> (Ea -> r) -> r]
   template<class Rest>
-  void run(Canceler& s, const Rest& rest) const {
+  void execute(Canceler& s, const Rest& rest) const {
     using namespace boost::asio;
 
     F fcopy = f;
 
-    ma.run(s, [&s, fcopy, rest](const Error<A>& ea) {
+    ma.execute(s, [&s, fcopy, rest](const Error<A>& ea) {
         if (ea.is_error()) {
           rest(typename Error<value_type>::Fail{ea.error()});
         }
         else {
-          fcopy(ea.value()).run(s, rest);
+          fcopy(ea.value()).execute(s, rest);
         }
         });
   }

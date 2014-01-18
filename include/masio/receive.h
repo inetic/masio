@@ -16,7 +16,7 @@ struct receive_task : monad< receive_task<MutableBufferSequence>
   {}
 
   template<class Rest>
-  void run(Canceler& canceler, const Rest& rest) const {
+  void execute(Canceler& canceler, const Rest& rest) const {
     using namespace std;
     using namespace boost::asio;
     using namespace boost::asio::error;

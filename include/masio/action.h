@@ -8,13 +8,13 @@ template<typename A> struct action : monad<action<A>, A> {
   typedef std::function<void(Error<value_type>)> Rest;
 
   struct wrapper_interface {
-    virtual void run(Canceler&, const Rest&) const = 0;
+    virtual void execute(Canceler&, const Rest&) const = 0;
     virtual ~wrapper_interface() {};
   };
 
   template<typename D> struct wrapper : wrapper_interface {
-    void run(Canceler& c, const Rest& rest) const override {
-      delegate.run(c, rest);
+    void execute(Canceler& c, const Rest& rest) const override {
+      delegate.execute(c, rest);
     }
 
     wrapper(const D& d) : delegate(d) {}
@@ -27,8 +27,8 @@ template<typename A> struct action : monad<action<A>, A> {
   {}
 
   template<class Rest>
-  void run(Canceler& c, const Rest& rest) const {
-    _delegate->run(c, rest);
+  void execute(Canceler& c, const Rest& rest) const {
+    _delegate->execute(c, rest);
   }
 
 private:

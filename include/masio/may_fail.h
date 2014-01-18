@@ -14,10 +14,10 @@ public:
   { }
 
   template<typename Rest>
-  void run(Canceler& c, const Rest& rest) const override {
+  void execute(Canceler& c, const Rest& rest) const override {
     using namespace boost::asio;
 
-    _delegate.run(c, [&c, rest](const Error<A>& ea) {
+    _delegate.execute(c, [&c, rest](const Error<A>& ea) {
         using Success = typename Error<value_type>::Success;
         using Fail    = typename Error<value_type>::Fail;
 

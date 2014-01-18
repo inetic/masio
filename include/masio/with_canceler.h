@@ -15,10 +15,10 @@ public:
   { }
 
   template<typename Rest>
-  void run(Canceler& s, const Rest& rest) const {
+  void execute(Canceler& s, const Rest& rest) const {
     s.link_child_canceler(_canceler);
     auto& c = _canceler;
-    _delegate.run(_canceler, [&c,rest](const Error<value_type>& ea) {
+    _delegate.execute(_canceler, [&c,rest](const Error<value_type>& ea) {
         c.unlink();
         rest(ea);
         });

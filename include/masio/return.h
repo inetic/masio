@@ -9,7 +9,7 @@ template<class A> struct Return : monad<Return<A>, A> {
   Return(const A& a) : value(a) {}
 
   template<typename Rest>
-  void run(const Canceler& canceler, const Rest& rest) const {
+  void execute(const Canceler& canceler, const Rest& rest) const {
     rest(typename Error<A>::Success{value});
   }
 

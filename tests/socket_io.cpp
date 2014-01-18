@@ -39,7 +39,7 @@ BOOST_AUTO_TEST_CASE(test_accept_connect) {
 
   Canceler canceler;
 
-  p.run(canceler, [&executed](Error<Results> ers) {
+  p.execute(canceler, [&executed](Error<Results> ers) {
      BOOST_REQUIRE(!ers.is_error());
 
      const Results& rs = *ers;
@@ -87,7 +87,7 @@ BOOST_AUTO_TEST_CASE(test_connect_accept) {
 
   Canceler canceler;
 
-  p.run(canceler, [&executed](Error<Results> ers) {
+  p.execute(canceler, [&executed](Error<Results> ers) {
      BOOST_REQUIRE(!ers.is_error());
 
      const Results& rs = *ers;
@@ -141,7 +141,7 @@ BOOST_AUTO_TEST_CASE(test_cancel_connect_accept) {
   using Results = std::pair<Error<none_t>, Error<none_t>>;
 
 
-  p.run(canceler, [&executed](Error<Results> ers) {
+  p.execute(canceler, [&executed](Error<Results> ers) {
      BOOST_REQUIRE(!ers.is_error());
 
      const Results& rs = *ers;
@@ -195,7 +195,7 @@ BOOST_AUTO_TEST_CASE(test_send_receive) {
 
   Canceler canceler;
 
-  p.run(canceler, [&executed, &rx_buffer, &tx_buffer](Error<Results> ers) {
+  p.execute(canceler, [&executed, &rx_buffer, &tx_buffer](Error<Results> ers) {
      BOOST_REQUIRE(!ers.is_error());
 
      const Results& rs = *ers;

@@ -40,7 +40,7 @@ BOOST_AUTO_TEST_CASE(test_all) {
 
   using Results = std::pair<Error<int>, Error<int>>;
 
-  p.run(canceler, [&executed](Error<Results> ers) {
+  p.execute(canceler, [&executed](Error<Results> ers) {
      BOOST_REQUIRE(!ers.is_error());
 
      const Results& rs = *ers;
@@ -88,7 +88,7 @@ BOOST_AUTO_TEST_CASE(test_all_wait) {
 
   using Results = std::pair<Error<Time>, Error<Time>>;
 
-  p.run(canceler, [&executed, start, duration0, duration1]
+  p.execute(canceler, [&executed, start, duration0, duration1]
                   (Error<Results> ers) {
      BOOST_REQUIRE(!ers.is_error());
 
@@ -148,7 +148,7 @@ BOOST_AUTO_TEST_CASE(test_all_wait_and_cancel) {
 
   using Results = std::pair<Error<Time>, Error<Time>>;
 
-  p.run(canceler, [&executed, start, duration0, duration1]
+  p.execute(canceler, [&executed, start, duration0, duration1]
                   (Error<Results> ers) {
      BOOST_REQUIRE(!ers.is_error());
 
@@ -205,7 +205,7 @@ BOOST_AUTO_TEST_CASE(test_all_or_none_wait_and_fail) {
 
   using Results = std::pair<Error<Time>, Error<Time>>;
 
-  p.run(canceler, [&executed, start, duration0, duration1]
+  p.execute(canceler, [&executed, start, duration0, duration1]
                   (Error<Results> ers) {
      BOOST_REQUIRE(!ers.is_error());
 
@@ -270,7 +270,7 @@ BOOST_AUTO_TEST_CASE(test_all_wait_and_pause) {
 
   using Results = std::pair<Error<Time>, Error<Time>>;
 
-  p.run(canceler, [&executed, start, duration0, duration1]
+  p.execute(canceler, [&executed, start, duration0, duration1]
                   (Error<Results> ers) {
      BOOST_REQUIRE(!ers.is_error());
 
@@ -335,7 +335,7 @@ BOOST_AUTO_TEST_CASE(test_all_wait_and_cancel_subcancelers) {
 
   using Results = std::pair<Error<Time>, Error<Time>>;
 
-  p.run(canceler, [&executed, start, duration0, duration1]
+  p.execute(canceler, [&executed, start, duration0, duration1]
                   (Error<Results> ers) {
      BOOST_REQUIRE(!ers.is_error());
 

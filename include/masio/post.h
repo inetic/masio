@@ -9,7 +9,7 @@ struct post : monad<post, none_t> {
   post(boost::asio::io_service& ios) : _io_service(ios) {}
 
   template<class Rest>
-  void run(Canceler& canceler, const Rest& rest) const {
+  void execute(Canceler& canceler, const Rest& rest) const {
     using namespace boost::asio::error;
 
     _io_service.post([rest, &canceler]() {
