@@ -24,7 +24,6 @@ struct receive_task : monad< receive_task<MutableBufferSequence>
     using Success = typename Error<value_type>::Success;
     using Fail    = typename Error<value_type>::Fail;
 
-    auto& ios = socket.get_io_service();
     auto& s = socket;
 
     auto cancel_action = make_shared<Canceler::CancelAction>([&s]() {

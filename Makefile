@@ -18,7 +18,7 @@ run: all
 
 %: %.cpp $(INC_FILES) Makefile
 	@echo $@
-	@g++ -I$(INC_DIR) -ggdb -std=c++11 $< $(LIBS) -o $@
+	@g++ -I$(INC_DIR) -Wall -ggdb -std=c++11 $< $(LIBS) -o $@
 
 clean:
 	@-for t in $(TESTS); do rm $(TEST_DIR)/$$t; done

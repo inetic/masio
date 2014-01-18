@@ -23,7 +23,6 @@ public:
     using namespace std;
     using error_code = boost::system::error_code;
     using Success = typename Error<value_type>::Success;
-    using Fail    = typename Error<value_type>::Fail;
 
     struct Data {
       size_t     remaining;
