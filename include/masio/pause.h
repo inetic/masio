@@ -37,8 +37,8 @@ struct pause : monad<pause, none_t> {
   void execute(Canceler& canceler, const Rest& rest) const {
     using namespace std;
     using namespace boost::asio::error;
-    using Fail = Error<none_t>::Fail;
-    using Success = Error<none_t>::Success;
+    using Fail = result<none_t>::Fail;
+    using Success = result<none_t>::Success;
 
     auto kick_ptr = &kick;
     auto ios_ptr  = &io_service;

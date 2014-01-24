@@ -14,7 +14,8 @@ using boost::none_t;
 #include <masio/monad.h>
 
 #include <masio/canceler.h>
-#include <masio/error.h>
+#include <masio/result.h>
+
 #include <masio/bind.h>
 #include <masio/return.h>
 #include <masio/action.h>

@@ -38,9 +38,9 @@ BOOST_AUTO_TEST_CASE(test_all) {
 
   bool executed = false;
 
-  using Results = std::pair<Error<int>, Error<int>>;
+  using Results = std::pair<result<int>, result<int>>;
 
-  p.execute(canceler, [&executed](Error<Results> ers) {
+  p.execute(canceler, [&executed](result<Results> ers) {
      BOOST_REQUIRE(!ers.is_error());
 
      const Results& rs = *ers;
@@ -86,10 +86,10 @@ BOOST_AUTO_TEST_CASE(test_all_wait) {
 
   auto start = now();
 
-  using Results = std::pair<Error<Time>, Error<Time>>;
+  using Results = std::pair<result<Time>, result<Time>>;
 
   p.execute(canceler, [&executed, start, duration0, duration1]
-                  (Error<Results> ers) {
+                  (result<Results> ers) {
      BOOST_REQUIRE(!ers.is_error());
 
      const Results& rs = *ers;
@@ -146,10 +146,10 @@ BOOST_AUTO_TEST_CASE(test_all_wait_and_cancel) {
 
   auto start = now();
 
-  using Results = std::pair<Error<Time>, Error<Time>>;
+  using Results = std::pair<result<Time>, result<Time>>;
 
   p.execute(canceler, [&executed, start, duration0, duration1]
-                  (Error<Results> ers) {
+                  (result<Results> ers) {
      BOOST_REQUIRE(!ers.is_error());
 
      const Results& rs = *ers;
@@ -203,10 +203,10 @@ BOOST_AUTO_TEST_CASE(test_all_or_none_wait_and_fail) {
 
   auto start = now();
 
-  using Results = std::pair<Error<Time>, Error<Time>>;
+  using Results = std::pair<result<Time>, result<Time>>;
 
   p.execute(canceler, [&executed, start, duration0, duration1]
-                  (Error<Results> ers) {
+                  (result<Results> ers) {
      BOOST_REQUIRE(!ers.is_error());
 
      const Results& rs = *ers;
@@ -268,10 +268,10 @@ BOOST_AUTO_TEST_CASE(test_all_wait_and_pause) {
 
   auto start = now();
 
-  using Results = std::pair<Error<Time>, Error<Time>>;
+  using Results = std::pair<result<Time>, result<Time>>;
 
   p.execute(canceler, [&executed, start, duration0, duration1]
-                  (Error<Results> ers) {
+                  (result<Results> ers) {
      BOOST_REQUIRE(!ers.is_error());
 
      const Results& rs = *ers;
@@ -333,10 +333,10 @@ BOOST_AUTO_TEST_CASE(test_all_wait_and_cancel_subcancelers) {
 
   auto start = now();
 
-  using Results = std::pair<Error<Time>, Error<Time>>;
+  using Results = std::pair<result<Time>, result<Time>>;
 
   p.execute(canceler, [&executed, start, duration0, duration1]
-                  (Error<Results> ers) {
+                  (result<Results> ers) {
      BOOST_REQUIRE(!ers.is_error());
 
      const Results& rs = ers.value();

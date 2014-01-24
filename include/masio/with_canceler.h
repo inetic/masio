@@ -18,7 +18,7 @@ public:
   void execute(Canceler& s, const Rest& rest) const {
     s.link_child_canceler(_canceler);
     auto& c = _canceler;
-    _delegate.execute(_canceler, [&c,rest](const Error<value_type>& ea) {
+    _delegate.execute(_canceler, [&c,rest](const result<value_type>& ea) {
         c.unlink();
         rest(ea);
         });

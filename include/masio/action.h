@@ -5,7 +5,7 @@ namespace masio {
 
 template<typename A> struct action : monad<action<A>, A> {
   using   value_type = A;
-  typedef std::function<void(Error<value_type>)> Rest;
+  typedef std::function<void(result<value_type>)> Rest;
 
   struct wrapper_interface {
     virtual void execute(Canceler&, const Rest&) const = 0;

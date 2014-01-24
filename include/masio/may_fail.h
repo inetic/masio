@@ -6,7 +6,7 @@ namespace masio {
 template<typename MA> class MayFail {
 public:
   using A           = typename MA::value_type;
-  using value_type  = Error<A>;
+  using value_type  = result<A>;
 
 public:
   MayFail(const MA& delegate)
@@ -17,15 +17,15 @@ public:
   void execute(Canceler& c, const Rest& rest) const override {
     using namespace boost::asio;
 
-    _delegate.execute(c, [&c, rest](const Error<A>& ea) {
-        using Success = typename Error<value_type>::Success;
-        using Fail    = typename Error<value_type>::Fail;
+    _delegate.execute(c, [&c, rest](const result<A>& ea) {
+        using Success = typename result<value_type>::Success;
+        using Fail    = typename result<value_type>::Fail;
 
         if (c.canceled() && !ea.is_error()) {
-          rest(Error<value_type>(Success{Fail{error::operation_aborted}}));
+          rest(result<value_type>(Success{Fail{error::operation_aborted}}));
         }
         else {
-          rest(Error<value_type>(Success{ea}));
+          rest(result<value_type>(Success{ea}));
         }
         });
   }

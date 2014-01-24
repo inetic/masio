@@ -30,8 +30,8 @@ struct resolve : monad<resolve, boost::asio::ip::tcp::resolver::iterator> {
     using namespace boost::asio::error;
     using boost::system::error_code;
     using CancelAction = Canceler::CancelAction;
-    using Success = typename Error<value_type>::Success;
-    using Fail    = typename Error<value_type>::Fail;
+    using Success = typename result<value_type>::Success;
+    using Fail    = typename result<value_type>::Fail;
 
     auto resolver = make_shared<tcp::resolver>(io_service);
 

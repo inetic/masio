@@ -39,7 +39,7 @@ BOOST_AUTO_TEST_CASE(test_wait) {
 
   auto start = now();
 
-  p.execute(canceler, [start, wait_duration](Error<int> i) {
+  p.execute(canceler, [start, wait_duration](result<int> i) {
      BOOST_REQUIRE(!i.is_error());
      BOOST_REQUIRE_EQUAL(*i, 43);
      REQUIRE_DURATION(now() - start, wait_duration);
@@ -74,7 +74,7 @@ BOOST_AUTO_TEST_CASE(test_cancel_wait) {
 
   auto start = now();
 
-  p.execute(canceler, [start](Error<int> i) {
+  p.execute(canceler, [start](result<int> i) {
      BOOST_REQUIRE(i.is_error());
      BOOST_REQUIRE_EQUAL(i.error(), asio::error::operation_aborted);
      REQUIRE_DURATION(now() - start, 0);
@@ -108,7 +108,7 @@ BOOST_AUTO_TEST_CASE(test_wait_and_may_fail) {
 
   auto start = now();
 
-  p.execute(canceler, [start, wait_duration](Error<Error<int>> i) {
+  p.execute(canceler, [start, wait_duration](result<result<int>> i) {
      BOOST_REQUIRE(!i.is_error());
      BOOST_REQUIRE(!i->is_error());
      BOOST_REQUIRE_EQUAL(**i, 21);
@@ -141,7 +141,7 @@ BOOST_AUTO_TEST_CASE(test_cancel_wait_and_may_fail) {
 
   auto start = now();
 
-  p.execute(canceler, [start](Error<Error<int>> i) {
+  p.execute(canceler, [start](result<result<int>> i) {
      BOOST_REQUIRE(!i.is_error());
      BOOST_REQUIRE(i.value().is_error());
      BOOST_REQUIRE_EQUAL(i.value().error(), asio::error::operation_aborted);

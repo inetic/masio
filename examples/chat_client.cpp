@@ -109,7 +109,7 @@ int main(int argc, char* argv[]) {
   Canceler canceler;
 
   boost::thread thread([&]() {
-      program.execute(canceler, [&](Error<none_t> ev) {
+      program.execute(canceler, [&](result<none_t> ev) {
         if (ev.is_error()) {
           cerr << "Error " << ev.error().message() << "\n";
         }

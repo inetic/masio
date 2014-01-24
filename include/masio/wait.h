@@ -9,8 +9,8 @@ public:
   using error_code = boost::system::error_code;
 
 private:
-  using Fail    =  Error<value_type>::Fail;
-  using Success =  Error<value_type>::Success;
+  using Fail    = result<value_type>::Fail;
+  using Success = result<value_type>::Success;
 
 public:
 

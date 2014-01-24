@@ -15,11 +15,11 @@ struct post : monad<post, none_t> {
     _io_service.post([rest, &canceler]() {
 
         if (canceler.canceled()) {
-          rest(typename Error<value_type>::Fail{operation_aborted});
+          rest(typename result<value_type>::Fail{operation_aborted});
           return;
         }
 
-        rest(typename Error<value_type>::Success{none});
+        rest(typename result<value_type>::Success{none});
         });
   }
 

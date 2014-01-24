@@ -35,11 +35,11 @@ BOOST_AUTO_TEST_CASE(test_accept_connect) {
 
   bool executed = false;
 
-  using Results = std::pair<Error<none_t>, Error<none_t>>;
+  using Results = std::pair<result<none_t>, result<none_t>>;
 
   Canceler canceler;
 
-  p.execute(canceler, [&executed](Error<Results> ers) {
+  p.execute(canceler, [&executed](result<Results> ers) {
      BOOST_REQUIRE(!ers.is_error());
 
      const Results& rs = *ers;
@@ -83,11 +83,11 @@ BOOST_AUTO_TEST_CASE(test_connect_accept) {
 
   bool executed = false;
 
-  using Results = std::pair<Error<none_t>, Error<none_t>>;
+  using Results = std::pair<result<none_t>, result<none_t>>;
 
   Canceler canceler;
 
-  p.execute(canceler, [&executed](Error<Results> ers) {
+  p.execute(canceler, [&executed](result<Results> ers) {
      BOOST_REQUIRE(!ers.is_error());
 
      const Results& rs = *ers;
@@ -138,10 +138,10 @@ BOOST_AUTO_TEST_CASE(test_cancel_connect_accept) {
 
   bool executed = false;
 
-  using Results = std::pair<Error<none_t>, Error<none_t>>;
+  using Results = std::pair<result<none_t>, result<none_t>>;
 
 
-  p.execute(canceler, [&executed](Error<Results> ers) {
+  p.execute(canceler, [&executed](result<Results> ers) {
      BOOST_REQUIRE(!ers.is_error());
 
      const Results& rs = *ers;
@@ -191,11 +191,11 @@ BOOST_AUTO_TEST_CASE(test_send_receive) {
 
   bool executed = false;
 
-  using Results = std::pair<Error<none_t>, Error<none_t>>;
+  using Results = std::pair<result<none_t>, result<none_t>>;
 
   Canceler canceler;
 
-  p.execute(canceler, [&executed, &rx_buffer, &tx_buffer](Error<Results> ers) {
+  p.execute(canceler, [&executed, &rx_buffer, &tx_buffer](result<Results> ers) {
      BOOST_REQUIRE(!ers.is_error());
 
      const Results& rs = *ers;

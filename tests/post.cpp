@@ -18,7 +18,7 @@ BOOST_AUTO_TEST_CASE(zero_binds_one_post) {
 
   auto p = post(ios) > success(10);
 
-  p.execute(canceler, [](Error<int> i) {
+  p.execute(canceler, [](result<int> i) {
      BOOST_REQUIRE(!i.is_error());
      BOOST_REQUIRE_EQUAL(*i, 10);
      });
@@ -45,7 +45,7 @@ BOOST_AUTO_TEST_CASE(binds_and_posts) {
             return success<int>(a+2);
         };
 
-  p.execute(canceler, [](Error<int> i) {
+  p.execute(canceler, [](result<int> i) {
      BOOST_REQUIRE(!i.is_error());
      BOOST_REQUIRE_EQUAL(*i, 23);
      });
@@ -77,7 +77,7 @@ BOOST_AUTO_TEST_CASE(fail1) {
             return success<int>(a+2);
         };
 
-  p.execute(canceler, [](Error<int> i) {
+  p.execute(canceler, [](result<int> i) {
      BOOST_REQUIRE(i.is_error());
      BOOST_REQUIRE_EQUAL(i.error(), operation_aborted);
      });
@@ -105,7 +105,7 @@ BOOST_AUTO_TEST_CASE(fail2) {
           return fail<int>(asio::error::operation_aborted);
         };
 
-  p.execute(canceler, [](Error<int> i) {
+  p.execute(canceler, [](result<int> i) {
      BOOST_REQUIRE(i.is_error());
      BOOST_REQUIRE_EQUAL(i.error(), asio::error::operation_aborted);
      });
@@ -143,7 +143,7 @@ BOOST_AUTO_TEST_CASE(canceling) {
 
   bool executed = false;
 
-  p.execute(canceler, [&executed](Error<float> i) {
+  p.execute(canceler, [&executed](result<float> i) {
      executed = true;
      BOOST_REQUIRE(i.is_error());
      });
@@ -177,7 +177,7 @@ BOOST_AUTO_TEST_CASE(forever_test) {
 
   bool executed = false;
 
-  forever(p).execute(canceler, [&executed](Error<none_t> i) {
+  forever(p).execute(canceler, [&executed](result<none_t> i) {
      executed = true;
      BOOST_REQUIRE(i.is_error());
      });

@@ -19,8 +19,8 @@ template<typename Iterator> struct connect_task
     using namespace boost::asio;
     using namespace boost::asio::error;
     using boost::system::error_code;
-    using Success = typename Error<value_type>::Success;
-    using Fail    = typename Error<value_type>::Fail;
+    using Success = typename result<value_type>::Success;
+    using Fail    = typename result<value_type>::Fail;
 
     auto& s = socket;
 

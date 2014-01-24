@@ -10,7 +10,7 @@ template<class A> struct Fail : monad<Fail<A>, A> {
 
   template<typename Rest>
   void execute(Canceler& canceler, const Rest& rest) const {
-    rest(typename Error<A>::Fail{error});
+    rest(typename result<A>::Fail{error});
   }
 
   error_code error;

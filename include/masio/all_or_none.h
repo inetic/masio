@@ -5,12 +5,12 @@ namespace masio {
 
 template<class MA, class MB> class AllOrNone
   : public monad< AllOrNone<MA, MB>
-                , std::pair< Error<typename MA::value_type>
-                           , Error<typename MB::value_type>>> {
+                , std::pair< result<typename MA::value_type>
+                           , result<typename MB::value_type>>> {
 public:
   using A           = typename MA::value_type;
   using B           = typename MB::value_type;
-  using value_type  = std::pair<Error<A>, Error<B>>;
+  using value_type  = std::pair<result<A>, result<B>>;
 
 public:
   AllOrNone(const MA& ma, const MB& mb)
@@ -22,7 +22,7 @@ public:
   void execute(Canceler& canceler, const Rest& rest) const {
     using namespace std;
     using error_code = boost::system::error_code;
-    using Success = typename Error<value_type>::Success;
+    using Success = typename result<value_type>::Success;
 
     struct Data {
       size_t     remaining;
@@ -34,7 +34,7 @@ public:
 
     auto data = make_shared<Data>();
 
-    ma.execute(canceler, [data, &canceler, rest](const Error<A>& ea) {
+    ma.execute(canceler, [data, &canceler, rest](const result<A>& ea) {
         data->results.first = ea;
 
         if (ea.is_error() && !data->first_error) {
@@ -47,7 +47,7 @@ public:
         }
         });
 
-    mb.execute(canceler, [data, &canceler, rest](const Error<B>& eb) {
+    mb.execute(canceler, [data, &canceler, rest](const result<B>& eb) {
         data->results.second = eb;
 
         if (eb.is_error() && !data->first_error) {
