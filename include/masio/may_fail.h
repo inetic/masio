@@ -3,10 +3,10 @@
 
 namespace masio {
 
-template<typename MA> class MayFail {
+template<typename MA> class MayFail
+  : public monad<result<typename MA::value_type>> {
 public:
-  using A           = typename MA::value_type;
-  using value_type  = result<A>;
+  using A = typename MA::value_type;
 
 public:
   MayFail(const MA& delegate)
@@ -16,6 +16,7 @@ public:
   template<typename Rest>
   void execute(Canceler& c, const Rest& rest) const override {
     using namespace boost::asio;
+    using value_type = result<A>;
 
     _delegate.execute(c, [&c, rest](const result<A>& ea) {
         using Success = typename result<value_type>::Success;

@@ -3,7 +3,7 @@
 
 namespace masio {
 
-class wait : public monad<wait, none_t> {
+class wait : public monad<none_t> {
 public:
   using value_type = none_t;
   using error_code = boost::system::error_code;
@@ -37,11 +37,11 @@ public:
                       (const error_code& error){
         cancel_action->unlink();
 
-        if (error) {
-          rest(Fail{error});
-        }
-        else if (canceler.canceled()) {
+        if (canceler.canceled()) {
           rest(Fail{error::operation_aborted});
+        }
+        else if (error) {
+          rest(Fail{error});
         }
         else {
           rest(Success{none});

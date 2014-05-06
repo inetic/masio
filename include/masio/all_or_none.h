@@ -4,9 +4,8 @@
 namespace masio {
 
 template<class MA, class MB> class AllOrNone
-  : public monad< AllOrNone<MA, MB>
-                , std::pair< result<typename MA::value_type>
-                           , result<typename MB::value_type>>> {
+  : public monad<std::pair< result<typename MA::value_type>
+                          , result<typename MB::value_type>>> {
 public:
   using A           = typename MA::value_type;
   using B           = typename MB::value_type;

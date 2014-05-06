@@ -3,7 +3,7 @@
 
 namespace masio {
 
-template<typename A> struct action : monad<action<A>, A> {
+template<typename A> struct action : monad<A> {
   using   value_type = A;
   typedef std::function<void(result<value_type>)> Rest;
 

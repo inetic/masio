@@ -4,7 +4,7 @@
 namespace masio {
 
 template<typename ConstBufferSequence>
-struct send_task : monad<send_task<ConstBufferSequence>, none_t> {
+struct send_task : monad<none_t> {
   using tcp = boost::asio::ip::tcp;
   using value_type = none_t;
 

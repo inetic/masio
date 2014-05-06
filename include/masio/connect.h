@@ -3,8 +3,7 @@
 
 namespace masio {
 
-template<typename Iterator> struct connect_task
-  : monad<connect_task<Iterator>, none_t> {
+template<typename Iterator> struct connect_task : monad<none_t> {
   using tcp = boost::asio::ip::tcp;
   using value_type = none_t;
 

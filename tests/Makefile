@@ -1,14 +1,14 @@
 
 INC_DIR     := ../include
 INC_FILES   := $(shell find $(INC_DIR) -name '*.h')
-LIBS        := -lboost_system -lboost_unit_test_framework
+LIBS        := -lboost_system -lboost_unit_test_framework -lpthread
 TESTS       := core post wait all socket_io
 
 .PHONY: tests run clean
 
 tests: $(TESTS)
 
-run: all
+run: tests
 	@for t in $(TESTS); do ./$$t || exit 1; done
 
 %: %.cpp $(INC_FILES) Makefile
