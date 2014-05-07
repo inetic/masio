@@ -3,9 +3,8 @@
 
 namespace masio {
 
-template<typename A> struct action : monad<A> {
-  using   value_type = A;
-  typedef std::function<void(result<value_type>)> Rest;
+template<typename... A> struct action : monad<A...> {
+  typedef std::function<void(result<A...>)> Rest;
 
   struct wrapper_interface {
     virtual void execute(Canceler&, const Rest&) const = 0;

@@ -3,9 +3,8 @@
 
 namespace masio {
 
-template<typename Iterator> struct connect_task : monad<none_t> {
+template<typename Iterator> struct connect_task : monad<> {
   using tcp = boost::asio::ip::tcp;
-  using value_type = none_t;
 
   connect_task(tcp::socket& socket, Iterator iterator)
     : socket(socket)
@@ -18,8 +17,8 @@ template<typename Iterator> struct connect_task : monad<none_t> {
     using namespace boost::asio;
     using namespace boost::asio::error;
     using boost::system::error_code;
-    using Success = typename result<value_type>::Success;
-    using Fail    = typename result<value_type>::Fail;
+    using Success = typename result<>::Success;
+    using Fail    = typename result<>::Fail;
 
     auto& s = socket;
 
@@ -41,7 +40,7 @@ template<typename Iterator> struct connect_task : monad<none_t> {
           rest(Fail{error});
         }
         else {
-          rest(Success{none});
+          rest(Success());
         }
         });
   }

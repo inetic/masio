@@ -4,9 +4,8 @@
 namespace masio {
 
 template<typename ConstBufferSequence>
-struct send_task : monad<none_t> {
+struct send_task : monad<> {
   using tcp = boost::asio::ip::tcp;
-  using value_type = none_t;
 
   send_task(tcp::socket& socket, const ConstBufferSequence& buffer_sequence)
     : socket(socket)
@@ -19,8 +18,8 @@ struct send_task : monad<none_t> {
     using namespace boost::asio;
     using namespace boost::asio::error;
     using boost::system::error_code;
-    using Success = typename result<value_type>::Success;
-    using Fail    = typename result<value_type>::Fail;
+    using Success = typename result<>::Success;
+    using Fail    = typename result<>::Fail;
 
     auto& s = socket;
 
@@ -42,7 +41,7 @@ struct send_task : monad<none_t> {
           rest(Fail{error});
         }
         else {
-          rest(Success{none});
+          rest(Success());
         }
         });
   }

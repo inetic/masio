@@ -3,14 +3,13 @@
 
 namespace masio {
 
-class wait : public monad<none_t> {
+class wait : public monad<> {
 public:
-  using value_type = none_t;
   using error_code = boost::system::error_code;
 
 private:
-  using Fail    = result<value_type>::Fail;
-  using Success = result<value_type>::Success;
+  using Fail    = result<>::Fail;
+  using Success = result<>::Success;
 
 public:
 
@@ -44,7 +43,7 @@ public:
           rest(Fail{error});
         }
         else {
-          rest(Success{none});
+          rest(Success());
         }
       });
   }

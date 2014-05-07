@@ -4,39 +4,52 @@
 namespace masio {
 
 namespace __detail {
-  template<class A> struct Success { A value; };
+  template<class... A> struct Success : std::tuple<A...> {
+    Success(const A&... as) : std::tuple<A...>(as...) {}
+    Success(const std::tuple<A...>& tuple) : std::tuple<A...>(tuple) {}
+  };
+
   struct Fail    { boost::system::error_code value; };
 }
 
-template<class A> struct result
+template<class... A> struct result
 {
-  typedef __detail::Success<A> Success;
-  typedef __detail::Fail       Fail;
+  typedef __detail::Success<A...> Success;
+  typedef __detail::Fail          Fail;
 
+  typedef std::tuple<A...>          Tuple;
   typedef boost::system::error_code error_code;
 
   result() {}
-  result(const Success& a) : _is_value(true) { new (&_value) A(a.value); }
+  result(const Success& a) : _is_value(true) { new (&_value) Tuple(a); }
   result(const Fail&    a) : _is_value(false), _e(a.value) {}
 
   bool is_error() const;
   bool is_value() const;
 
-  const A&   value() const;
+  const Tuple& values() const;
+  Tuple& values();
+
+  template<int I>
+  const typename std::tuple_element<I, Tuple>::type&
+  value() const {
+    return std::get<I>(values());
+  }
+
   error_code error() const;
 
-  const A& operator*() const  { return value(); }
-  const A* operator->() const { return &value(); }
+  const Tuple& operator*() const  { return values(); }
+  const Tuple* operator->() const { return &values(); }
 
   ~result() {
     if (_is_value) {
-      reinterpret_cast<A&>(_value).~A();
+      reinterpret_cast<Tuple&>(_value).~Tuple();
     }
   }
 private:
   typedef typename std::aligned_storage<
-    sizeof(A),
-    std::alignment_of<A>::value>::type storage;
+    sizeof(Tuple),
+    std::alignment_of<Tuple>::value>::type storage;
 
   bool _is_value;
 
@@ -46,26 +59,31 @@ private:
   };
 };
 
-template<class A>
-bool result<A>::is_error() const {
+template<class... A>
+bool result<A...>::is_error() const {
   if (!_is_value) {
     return _e != error_code(); // error_code() means success.
   }
   return false;
 }
 
-template<class A>
-bool result<A>::is_value() const {
+template<class... A>
+bool result<A...>::is_value() const {
   return _is_value;
 }
 
-template<class A>
-const A& result<A>::value() const {
-  return reinterpret_cast<const A&>(_value);
+template<class... A>
+const typename result<A...>::Tuple& result<A...>::values() const {
+  return reinterpret_cast<const Tuple&>(_value);
 }
 
-template<class A>
-typename result<A>::error_code result<A>::error() const {
+template<class... A>
+typename result<A...>::Tuple& result<A...>::values() {
+  return reinterpret_cast<Tuple&>(_value);
+}
+
+template<class... A>
+typename result<A...>::error_code result<A...>::error() const {
   if (!is_error()) { return error_code(); }
   return _e;
 }

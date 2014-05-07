@@ -38,18 +38,19 @@ BOOST_AUTO_TEST_CASE(test_all) {
 
   bool executed = false;
 
-  using Results = std::pair<result<int>, result<int>>;
+  using Result = result<result<int>, result<int>>;
 
-  p.execute(canceler, [&executed](result<Results> ers) {
-     BOOST_REQUIRE(!ers.is_error());
+  p.execute(canceler, [&executed](Result rs) {
+     BOOST_REQUIRE(!rs.is_error());
 
-     const Results& rs = *ers;
+     const auto& v0 = rs.value<0>();
+     const auto& v1 = rs.value<1>();
 
-     BOOST_REQUIRE(rs.first.is_value());
-     BOOST_REQUIRE(rs.second.is_value());
+     BOOST_REQUIRE(v0.is_value());
+     BOOST_REQUIRE(v1.is_value());
 
-     BOOST_REQUIRE_EQUAL(*rs.first, 11);
-     BOOST_REQUIRE_EQUAL(*rs.second, 22);
+     BOOST_REQUIRE_EQUAL(v0.value<0>(), 11);
+     BOOST_REQUIRE_EQUAL(v1.value<0>(), 22);
 
      executed = true;
      });
@@ -77,8 +78,8 @@ BOOST_AUTO_TEST_CASE(test_all_wait) {
   unsigned int duration0 = 123;
   unsigned int duration1 = 234;
 
-  auto p0 = wait(ios, duration0) >= [](none_t) { return success(now()); };
-  auto p1 = wait(ios, duration1) >= [](none_t) { return success(now()); };
+  auto p0 = wait(ios, duration0) >= []() { return success(now()); };
+  auto p1 = wait(ios, duration1) >= []() { return success(now()); };
 
   auto p = all(p0, p1);
 
@@ -86,20 +87,20 @@ BOOST_AUTO_TEST_CASE(test_all_wait) {
 
   auto start = now();
 
-  using Results = std::pair<result<Time>, result<Time>>;
+  using Results = result<result<Time>, result<Time>>;
 
-  p.execute(canceler, [&executed, start, duration0, duration1]
-                  (result<Results> ers) {
-     BOOST_REQUIRE(!ers.is_error());
+  p.execute(canceler, [&executed, start, duration0, duration1](Results rs) {
+     BOOST_REQUIRE(!rs.is_error());
 
-     const Results& rs = *ers;
+     const auto& r0 = rs.value<0>();
+     const auto& r1 = rs.value<1>();
 
-     BOOST_REQUIRE(rs.first.is_value());
-     BOOST_REQUIRE(rs.second.is_value());
+     BOOST_REQUIRE(r0.is_value());
+     BOOST_REQUIRE(r1.is_value());
 
      auto end = now();
-     auto t0  = *rs.first;
-     auto t1  = *rs.second;
+     const auto& t0 = r0.value<0>();
+     const auto& t1 = r1.value<0>();
 
      REQUIRE_DURATION(t0 - start, duration0);
      REQUIRE_DURATION(t1 - start, duration1);
@@ -132,13 +133,12 @@ BOOST_AUTO_TEST_CASE(test_all_wait_and_cancel) {
   unsigned int duration1 = 234;
 
   auto p0 = wait(ios, duration0)
-         >= [&canceler](none_t) {
+         >= [&canceler]() {
               canceler.cancel();
               return success(now());
             };
 
-  auto p1 = wait(ios, duration1)
-         >= [](none_t) { return success(now()); };
+  auto p1 = wait(ios, duration1) >= []() { return success(now()); };
 
   auto p = all(p0, p1);
 
@@ -146,20 +146,20 @@ BOOST_AUTO_TEST_CASE(test_all_wait_and_cancel) {
 
   auto start = now();
 
-  using Results = std::pair<result<Time>, result<Time>>;
+  using Results = result<result<Time>, result<Time>>;
 
-  p.execute(canceler, [&executed, start, duration0, duration1]
-                  (result<Results> ers) {
+  p.execute(canceler, [&executed, start, duration0, duration1](Results ers) {
      BOOST_REQUIRE(!ers.is_error());
 
-     const Results& rs = *ers;
+     const auto& r0 = ers.value<0>();
+     const auto& r1 = ers.value<1>();
 
-     BOOST_REQUIRE(rs.first.is_value());
-     BOOST_REQUIRE(rs.second.is_error());
+     BOOST_REQUIRE(r0.is_value());
+     BOOST_REQUIRE(r1.is_error());
 
      auto end = now();
-     auto t0  = rs.first.value();
-     auto e   = rs.second.error();
+     auto t0  = r0.value<0>();
+     auto e   = r1.error();
 
      REQUIRE_DURATION(t0 - start, duration0);
      REQUIRE_DURATION(end - start, min(duration0, duration1));
@@ -192,10 +192,9 @@ BOOST_AUTO_TEST_CASE(test_all_or_none_wait_and_fail) {
   unsigned int duration1 = 234;
 
   auto p0 = wait(ios, duration0)
-         >= [&canceler](none_t) { return fail<Time>(fault); };
+         >= [&canceler]() { return fail<Time>(fault); };
 
-  auto p1 = wait(ios, duration1)
-         >= [](none_t) { return success(now()); };
+  auto p1 = wait(ios, duration1) >= []() { return success(now()); };
 
   auto p = all_or_none(p0, p1);
 
@@ -203,20 +202,20 @@ BOOST_AUTO_TEST_CASE(test_all_or_none_wait_and_fail) {
 
   auto start = now();
 
-  using Results = std::pair<result<Time>, result<Time>>;
+  using Results = result<result<Time>, result<Time>>;
 
-  p.execute(canceler, [&executed, start, duration0, duration1]
-                  (result<Results> ers) {
+  p.execute(canceler, [&executed, start, duration0, duration1](Results ers) {
      BOOST_REQUIRE(!ers.is_error());
 
-     const Results& rs = *ers;
+     const auto& r0 = ers.value<0>();
+     const auto& r1 = ers.value<1>();
 
-     BOOST_REQUIRE(rs.first.is_error());
-     BOOST_REQUIRE(rs.second.is_error());
+     BOOST_REQUIRE(r0.is_error());
+     BOOST_REQUIRE(r1.is_error());
 
      auto end = now();
-     auto e0  = rs.first.error();
-     auto e1  = rs.second.error();
+     auto e0  = r0.error();
+     auto e1  = r1.error();
 
      REQUIRE_DURATION(end - start, min(duration0, duration1));
      BOOST_REQUIRE_EQUAL(e0, fault);
@@ -251,14 +250,14 @@ BOOST_AUTO_TEST_CASE(test_all_wait_and_pause) {
   unsigned int duration1 = 234;
 
   auto p0 = wait(ios, duration0)
-         >= [&kick](none_t) {
+         >= [&kick]() {
               kick();
               return success(now());
             };
 
   auto p1 = pause(ios, kick)
           > wait(ios, duration1)
-         >= [](none_t) {
+         >= []() {
            return success(now());
          };
 
@@ -268,20 +267,17 @@ BOOST_AUTO_TEST_CASE(test_all_wait_and_pause) {
 
   auto start = now();
 
-  using Results = std::pair<result<Time>, result<Time>>;
+  using Results = result<result<Time>, result<Time>>;
 
-  p.execute(canceler, [&executed, start, duration0, duration1]
-                  (result<Results> ers) {
-     BOOST_REQUIRE(!ers.is_error());
+  p.execute(canceler, [&executed, start, duration0, duration1] (Results rs) {
+     BOOST_REQUIRE(!rs.is_error());
 
-     const Results& rs = *ers;
-
-     BOOST_REQUIRE(rs.first.is_value());
-     BOOST_REQUIRE(rs.second.is_value());
+     BOOST_REQUIRE(rs.value<0>().is_value());
+     BOOST_REQUIRE(rs.value<1>().is_value());
 
      auto end = now();
-     auto t0  = rs.first.value();
-     auto t1  = rs.second.value();
+     auto t0  = rs.value<0>().value<0>();
+     auto t1  = rs.value<1>().value<0>();
 
      REQUIRE_DURATION(t0 - start, duration0);
      REQUIRE_DURATION(t1 - start, duration0 + duration1);
@@ -315,14 +311,14 @@ BOOST_AUTO_TEST_CASE(test_all_wait_and_cancel_subcancelers) {
   unsigned int duration1 = 234;
 
   auto p0 = wait(ios, duration0)
-         >= [&p1_canceler](none_t) {
+         >= [&p1_canceler]() {
               p1_canceler.cancel();
               return success(now());
             }
          >= [](Time t) { return success(t); };
 
   auto p1 = with_canceler( p1_canceler
-                         , wait(ios, duration1) >= [](none_t) {
+                       , wait(ios, duration1) >= []() {
                              return success(now());
                            })
          >= [](Time t) { return success(t); };
@@ -333,20 +329,18 @@ BOOST_AUTO_TEST_CASE(test_all_wait_and_cancel_subcancelers) {
 
   auto start = now();
 
-  using Results = std::pair<result<Time>, result<Time>>;
+  using Results = result<result<Time>, result<Time>>;
 
   p.execute(canceler, [&executed, start, duration0, duration1]
-                  (result<Results> ers) {
-     BOOST_REQUIRE(!ers.is_error());
+                  (Results rs) {
+     BOOST_REQUIRE(!rs.is_error());
 
-     const Results& rs = ers.value();
-
-     BOOST_REQUIRE(rs.first.is_value());
-     BOOST_REQUIRE(rs.second.is_error());
+     BOOST_REQUIRE(rs.value<0>().is_value());
+     BOOST_REQUIRE(rs.value<1>().is_error());
 
      auto end = now();
-     auto t0  = rs.first.value();
-     auto e   = rs.second.error();
+     auto t0  = rs.value<0>().value<0>();
+     auto e   = rs.value<1>().error();
 
      REQUIRE_DURATION(t0 - start, duration0);
      REQUIRE_DURATION(end - start, min(duration0, duration1));

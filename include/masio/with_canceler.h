@@ -3,11 +3,7 @@
 
 namespace masio {
 
-template<class MA> class WithCanceler
-  : public monad<typename MA::value_type> {
-public:
-  using value_type  = typename MA::value_type;
-
+template<class MA> class WithCanceler : public UseMonadArgs<monad, MA>::type {
 public:
   WithCanceler(Canceler& canceler, const MA& delegate)
     : _canceler(canceler)
@@ -16,11 +12,13 @@ public:
 
   template<typename Rest>
   void execute(Canceler& s, const Rest& rest) const {
+    using Result = typename UseMonadArgs<result, MA>::type;
+
     s.link_child_canceler(_canceler);
     auto& c = _canceler;
-    _delegate.execute(_canceler, [&c,rest](const result<value_type>& ea) {
+    _delegate.execute(_canceler, [&c,rest](const Result& r) {
         c.unlink();
-        rest(ea);
+        rest(r);
         });
   }
 

@@ -8,11 +8,10 @@ namespace masio {
 // [s -> (Ea -> r) -> r] ->
 // a -> [s -> (Eb -> r) -> r] ->
 // [s -> (Eb -> r) -> r]
-template<class MA, class MB> struct Bind : monad<typename MB::value_type> {
+template<class MA, class MB> struct Bind
+  : UseMonadArgs<monad, MB>::type {
 
-  using A = typename MA::value_type;
-  using F = std::function<MB(A)>;
-  using value_type = typename MB::value_type;
+  using F = typename FunctionWithMonadArgs<MB, typename MA::MonadType>::type;
 
   Bind(const MA& ma, const F& f)
     : ma(ma), f(f) {}
@@ -21,18 +20,20 @@ template<class MA, class MB> struct Bind : monad<typename MB::value_type> {
   template<class Rest>
   void execute(Canceler& s, const Rest& rest) const {
     using namespace boost::asio;
+    using ResultA = typename UseMonadArgs<result, MA>::type;
+    using ResultB = typename UseMonadArgs<result, MB>::type;
 
     F fcopy = f;
 
-    ma.execute(s, [&s, fcopy, rest](const result<A>& ea) {
+    ma.execute(s, [&s, fcopy, rest](const ResultA& ea) {
         if (s.canceled()) {
-          rest(typename result<value_type>::Fail{error::operation_aborted});
+          rest(typename ResultB::Fail{error::operation_aborted});
         }
         else if (ea.is_error()) {
-          rest(typename result<value_type>::Fail{ea.error()});
+          rest(typename ResultB::Fail{ea.error()});
         }
         else {
-          fcopy(ea.value()).execute(s, rest);
+          apply_tuple(fcopy, ea.values()).execute(s, rest);
         }
         });
   }

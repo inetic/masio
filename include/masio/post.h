@@ -3,9 +3,7 @@
 
 namespace masio {
 
-struct post : monad<none_t> {
-  using value_type = none_t;
-
+struct post : monad<> {
   post(boost::asio::io_service& ios) : _io_service(ios) {}
 
   template<class Rest>
@@ -15,11 +13,11 @@ struct post : monad<none_t> {
     _io_service.post([rest, &canceler]() {
 
         if (canceler.canceled()) {
-          rest(typename result<value_type>::Fail{operation_aborted});
+          rest(typename result<>::Fail{operation_aborted});
           return;
         }
 
-        rest(typename result<value_type>::Success{none});
+        rest(typename result<>::Success());
         });
   }
 

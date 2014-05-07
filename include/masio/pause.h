@@ -26,9 +26,7 @@ private:
   Rest rest;
 };
 
-struct pause : monad<none_t> {
-  using value_type = none_t;
-
+struct pause : monad<> {
   pause(boost::asio::io_service& io_service, kicker& kick)
     : io_service(io_service)
     , kick(kick) {}
@@ -37,8 +35,8 @@ struct pause : monad<none_t> {
   void execute(Canceler& canceler, const Rest& rest) const {
     using namespace std;
     using namespace boost::asio::error;
-    using Fail = result<none_t>::Fail;
-    using Success = result<none_t>::Success;
+    using Fail    = result<>::Fail;
+    using Success = result<>::Success;
 
     auto kick_ptr = &kick;
     auto ios_ptr  = &io_service;
@@ -56,7 +54,7 @@ struct pause : monad<none_t> {
 
         ios_ptr->post([rest, &canceler]() {
             if (!canceler.canceled()) {
-              rest(Success{none});
+              rest(Success{});
             }
             else {
               rest(Fail{operation_aborted});

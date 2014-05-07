@@ -4,10 +4,7 @@
 namespace masio {
 
 template<typename MA> class MayFail
-  : public monad<result<typename MA::value_type>> {
-public:
-  using A = typename MA::value_type;
-
+  : public monad<typename UseMonadArgs<result, MA>::type> {
 public:
   MayFail(const MA& delegate)
     : _delegate(delegate)
@@ -16,19 +13,21 @@ public:
   template<typename Rest>
   void execute(Canceler& c, const Rest& rest) const override {
     using namespace boost::asio;
-    using value_type = result<A>;
 
-    _delegate.execute(c, [&c, rest](const result<A>& ea) {
-        using Success = typename result<value_type>::Success;
-        using Fail    = typename result<value_type>::Fail;
+    using OrigResult = typename UseMonadArgs<result, MA>::type;
+    using Result     = result<OrigResult>;
+
+    _delegate.execute(c, [&c, rest](const OrigResult& ea) {
+        using Success = typename Result::Success;
+        using Fail    = typename Result::Fail;
 
         if (c.canceled() && !ea.is_error()) {
-          rest(result<value_type>(Success{Fail{error::operation_aborted}}));
+          rest(Result(Success{Fail{error::operation_aborted}}));
         }
         else {
-          rest(result<value_type>(Success{ea}));
+          rest(Result(Success{ea}));
         }
-        });
+      });
   }
 
 private:

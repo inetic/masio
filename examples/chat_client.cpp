@@ -43,27 +43,27 @@ struct chat_client {
   kicker          kick;
 };
 
-action<none_t> receive_message(chat_client& c) {
+action<> receive_message(chat_client& c) {
   auto& socket = c.socket;
   auto& m      = c.inbound_message;
 
-  return success(none)
-      >= [&](none_t) { // Receive message header
+  return success()
+      >= [&]() { // Receive message header
            m.data.resize(message::header_length);
            return receive(socket, buffer(&m.data[0], message::header_length));
          }
-      >= [&](none_t) { // Receive message body
+      >= [&]() { // Receive message body
            size_t size = m.decode_header();
            m.data.resize(size + message::header_length);
            return receive(socket, buffer(&m.data[message::header_length], size));
          }
-      >= [&](none_t) {
+      >= [&]() {
            cout << "Received: " << m.body() << "\n";
-           return success(none);
+           return success();
          }; 
 }
 
-action<none_t> send_message(chat_client& c) {
+action<> send_message(chat_client& c) {
   using masio::pause;
   using boost::asio::buffer;
 
@@ -71,16 +71,16 @@ action<none_t> send_message(chat_client& c) {
   auto& ms     = c.outbound_messages;
   auto& ios    = socket.get_io_service();
 
-  return success(none)
-      >= [&](none_t) -> action<none_t> {
+  return success()
+      >= [&]() -> action<> {
            if (ms.empty()) {
              return pause(ios, c.kick);
            }
            else {
              return send(socket, buffer(ms.front().data))
-                 >= [&](none_t) {
+                 >= [&]() {
                       ms.pop();
-                      return success(none);
+                      return success();
                     };
            }
          };
@@ -100,16 +100,16 @@ int main(int argc, char* argv[]) {
               >= [&](tcp::resolver::iterator iterator) {
                    return connect(c.socket, iterator);
                  }
-              >= [&](none_t) {
+              >= [&]() {
                    return all_or_none( forever(receive_message(c))
                                      , forever(send_message(c)))
-                        > success(none);
+                        > success();
                  };
 
   Canceler canceler;
 
   boost::thread thread([&]() {
-      program.execute(canceler, [&](result<none_t> ev) {
+      program.execute(canceler, [&](result<> ev) {
         if (ev.is_error()) {
           cerr << "Error " << ev.error().message() << "\n";
         }

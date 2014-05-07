@@ -11,22 +11,24 @@ using boost::none_t;
 
 } // masio namespace
 
+#include <masio/tools.h>
 #include <masio/monad.h>
 
 #include <masio/canceler.h>
 #include <masio/result.h>
 
-#include <masio/bind.h>
 #include <masio/return.h>
-#include <masio/action.h>
-#include <masio/post.h>
+#include <masio/bind.h>
 #include <masio/fail.h>
+#include <masio/action.h>
+#include <masio/all.h>
+#include <masio/may_fail.h>
+#include <masio/with_canceler.h>
+#include <masio/all_or_none.h>
+
+#include <masio/post.h>
 #include <masio/wait.h>
 #include <masio/pause.h>
-#include <masio/may_fail.h>
-#include <masio/all.h>
-#include <masio/all_or_none.h>
-#include <masio/with_canceler.h>
 
 #include <masio/resolve.h>
 #include <masio/connect.h>
@@ -36,10 +38,9 @@ using boost::none_t;
 
 namespace masio {
 
-template<typename MA>
-action<typename MA::value_type> forever(const MA& ma) {
-  using A = typename MA::value_type;
-  return ma >= [ma](const A&) { return forever(ma); };
+template<class MA>
+action<> forever(const MA& ma) {
+  return ma >= drop_args([ma]() { return forever(ma); });
 }
 
 } // masio namespace

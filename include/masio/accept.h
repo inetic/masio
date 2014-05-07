@@ -3,9 +3,8 @@
 
 namespace masio {
 
-struct accept : monad<none_t> {
+struct accept : monad<> {
   using tcp = boost::asio::ip::tcp;
-  using value_type = none_t;
 
   accept(tcp::socket& socket, unsigned short port)
     : socket(socket)
@@ -18,8 +17,8 @@ struct accept : monad<none_t> {
     using namespace boost::asio;
     using namespace boost::asio::error;
     using boost::system::error_code;
-    using Success = typename result<value_type>::Success;
-    using Fail    = typename result<value_type>::Fail;
+    using Success = typename result<>::Success;
+    using Fail    = typename result<>::Fail;
 
     auto& ios = socket.get_io_service();
 
@@ -43,7 +42,7 @@ struct accept : monad<none_t> {
           rest(Fail{error});
         }
         else {
-          rest(Success{none});
+          rest(Success());
         }
         });
   }

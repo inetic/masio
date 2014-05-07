@@ -7,30 +7,30 @@ namespace masio {
 
 template<class, class> class Bind;
 
-template<typename A>
+template<typename... A>
 struct monad {
-  using value_type = A;
+  typedef monad<A...> MonadType;
   static const bool is_monad = true;
 };
 
-template< typename MA
+template< class MA
         , typename F
-        , typename MB = typename std::result_of<F(typename MA::value_type)>::type
-        // ONly apply these operators if the argument is a monads.
+        , typename MB = typename ResultOf<F, typename MA::MonadType>::type
+        // Only apply these operators if MA and MB are monads.
         , class = typename std::enable_if<MA::is_monad>::type
-        , class = typename std::enable_if<MB::is_monad>::type>
+        , class = typename std::enable_if<MB::is_monad>::type
+        >
 Bind<MA, MB> operator>=(const MA& ma, const F& f) {
   return Bind<MA, MB>(ma, f);
 }
   
 template< typename MA
         , typename MB
-        // ONly apply these operators if the arguments are monads.
+        // Only apply these operators if MA and MB are monads.
         , class = typename std::enable_if<MA::is_monad>::type
         , class = typename std::enable_if<MB::is_monad>::type>
 Bind<MA, MB> operator>(const MA& ma, const MB& mb) {
-  using A = typename MA::value_type;
-  return Bind<MA, MB>(ma, [mb](const A&) { return mb; });
+  return Bind<MA, MB>(ma, drop_args([mb]() { return mb; }));
 }
 
 } // masio namespace

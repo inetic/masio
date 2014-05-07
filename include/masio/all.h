@@ -3,51 +3,72 @@
 
 namespace masio {
 
-template<class MA, class MB> class All
-  : public monad<std::pair< result<typename MA::value_type>
-                          , result<typename MB::value_type>>> {
-public:
-  using A           = typename MA::value_type;
-  using B           = typename MB::value_type;
-  using value_type  = std::pair<result<A>, result<B>>;
+namespace detail {
+  template<int I, int Max, class Rest, class Results, class Monads>
+  struct AllExecute {
+    static void go( Canceler& canceler
+                  , const Monads& monads
+                  , const std::shared_ptr<size_t>&  remaining
+                  , const std::shared_ptr<Results>& results
+                  , const Rest& rest) {
+      using namespace std;
+      using Tuple = Monads;
+      using M = typename tuple_element<I, Tuple>::type;
+      using R = typename UseMonadArgs<result, M>::type;
+
+      M m = get<I>(monads);
+
+      m.execute(canceler,
+          [remaining, results, rest] (const R& r) {
+          get<I>(results->values()) = r;
+          if (--*remaining == 0) {
+            rest(typename Results::Success(results->values()));
+          }
+          });
+
+      detail::AllExecute<I+1, Max, Rest, Results, Monads>
+        ::go(canceler, monads, remaining, results, rest);
+    }
+  };
+
+  template<int Max, class Rest, class Results, class Monads>
+  struct AllExecute<Max, Max, Rest, Results, Monads> {
+    static void go( Canceler& canceler
+                  , const Monads& monads
+                  , const std::shared_ptr<size_t>&  remaining
+                  , const std::shared_ptr<Results>& results
+                  , const Rest& rest) {}
+  };
+} // detail namespace
+
+template<class... Ms> class All
+  : public monad<typename UseMonadArgs<result, Ms>::type...> {
+private:
+  using Monads  = std::tuple<Ms...>;
+  using Results = result<typename UseMonadArgs<result, Ms>::type...>;
 
 public:
-  All(const MA& ma, const MB& mb)
-    : ma(ma)
-    , mb(mb)
-  {}
+  All(const Ms&... monads) : monads(monads...) {}
 
   template<typename Rest>
   void execute(Canceler& canceler, const Rest& rest) const {
     using namespace std;
-    using Success = typename result<value_type>::Success;
 
-    auto remaining = make_shared<size_t>(2);
-    auto results   = make_shared<value_type>();
+    static constexpr unsigned int size = sizeof...(Ms);
+    auto remaining = make_shared<size_t>(size);
+    auto results   = make_shared<Results>();
 
-    ma.execute(canceler, [remaining, results, rest](const result<A>& ea) {
-        results->first = ea;
-        if(--*remaining == 0) {
-          rest(Success{*results});
-        }
-        });
-
-    mb.execute(canceler, [remaining, results, rest](const result<B>& eb) {
-        results->second = eb;
-        if(--*remaining == 0) {
-          rest(Success{*results});
-        }
-        });
+    detail::AllExecute<0, size, Rest, Results, Monads>
+      ::go(canceler, monads, remaining, results, rest);
   }
 
 private:
-  MA ma;
-  MB mb;
+  Monads monads;
 };
 
-template<typename MA, typename MB>
-All<MA, MB> all(const MA& ma, const MB& mb) {
-  return All<MA, MB>(ma, mb);
+template<typename... Ms>
+All<Ms...> all(const Ms&... ms) {
+  return All<Ms...>(ms...);
 }
 
 } // masio namespace

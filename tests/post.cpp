@@ -20,7 +20,7 @@ BOOST_AUTO_TEST_CASE(zero_binds_one_post) {
 
   p.execute(canceler, [](result<int> i) {
      BOOST_REQUIRE(!i.is_error());
-     BOOST_REQUIRE_EQUAL(*i, 10);
+     BOOST_REQUIRE_EQUAL(i.value<0>(), 10);
      });
 
   int poll_count = 0;
@@ -39,7 +39,7 @@ BOOST_AUTO_TEST_CASE(binds_and_posts) {
   auto p = post(ios)
          > success(10)
         >= [&ios](int a) {
-          return post(ios)  > success(2*a + 1);
+          return post(ios) > success(2*a + 1);
         }
         >= [](float a) {
             return success<int>(a+2);
@@ -47,7 +47,7 @@ BOOST_AUTO_TEST_CASE(binds_and_posts) {
 
   p.execute(canceler, [](result<int> i) {
      BOOST_REQUIRE(!i.is_error());
-     BOOST_REQUIRE_EQUAL(*i, 23);
+     BOOST_REQUIRE_EQUAL(i.value<0>(), 23);
      });
 
   int poll_count = 0;
@@ -129,13 +129,13 @@ BOOST_AUTO_TEST_CASE(canceling) {
   bool second_executed = false;
 
   auto p = post(ios)
-        >= [&first_executed](none_t) {
+        >= [&first_executed]() {
              first_executed = true;
              return success<int>(10);
            }
         >= [&second_executed, &ios](int a) {
            return post(ios)
-               >= [a, &second_executed](none_t) {
+               >= [a, &second_executed]() {
                     second_executed = true;
                     return success<float>(2*a + 1);
                   };
@@ -170,31 +170,32 @@ BOOST_AUTO_TEST_CASE(forever_test) {
   unsigned int call_count = 0;
 
   auto p = post(ios)
-        >= [&call_count](none_t) {
+        >= [&call_count]() {
              call_count++;
-             return success(none);
+             return success();
            };
 
   bool executed = false;
 
-  forever(p).execute(canceler, [&executed](result<none_t> i) {
+  forever(p).execute(canceler, [&executed](result<> i) {
      executed = true;
      BOOST_REQUIRE(i.is_error());
      });
 
-  int poll_count = 0;
+  unsigned int poll_count = 0;
+  unsigned int cancel_at = 50;
 
   while(ios.poll_one()) {
     ++poll_count;
 
-    if (poll_count == 5) {
+    if (poll_count == cancel_at) {
       canceler.cancel();
     }
   }
 
   BOOST_REQUIRE(executed);
-  BOOST_REQUIRE_EQUAL(poll_count, 6);
-  BOOST_REQUIRE_EQUAL(call_count, 5);
+  BOOST_REQUIRE_EQUAL(poll_count, cancel_at + 1);
+  BOOST_REQUIRE_EQUAL(call_count, cancel_at);
 }
 
 //------------------------------------------------------------------------------

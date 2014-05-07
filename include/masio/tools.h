@@ -19,6 +19,89 @@ namespace masio {
 //   }
 template<class A> void capture(const A&) {}
 
+////////////////////////////////////////////////////////////////////////////////
+// Apply tuple
+namespace helper
+{
+  template <int... Is>
+  struct index {};
+
+  template <int N, int... Is>
+  struct gen_seq : gen_seq<N - 1, N - 1, Is...> {};
+
+  template <int... Is>
+  struct gen_seq<0, Is...> : index<Is...> {};
+}
+
+template <class F, typename... Args, int... Is>
+inline constexpr auto
+apply_tuple(const F& f, const std::tuple<Args...>& tup, helper::index<Is...>)
+  -> decltype(f(std::get<Is>(tup)...))
+{
+  return f(std::get<Is>(tup)...);
+}
+
+template <class F, typename... Args>
+inline constexpr auto
+apply_tuple(const F& f, const std::tuple<Args...>& tup)
+  -> decltype(apply_tuple(f, tup, helper::gen_seq<sizeof...(Args)>{}))
+{
+  return apply_tuple(f, tup, helper::gen_seq<sizeof...(Args)>{});
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// ResultOf
+template<class F, class Monad> struct ResultOf {};
+
+template<class F, template<typename...> class Monad, typename... Args>
+struct ResultOf<F, Monad<Args...>> {
+  typedef typename std::result_of<F(Args...)>::type type;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+// UseMonadArgs
+template<template<typename...> class Template, class Monad>
+struct UseMonadArgsImpl {};
+
+template< template<typename...> class Template
+        , template<typename...> class Monad
+        , typename... Args>
+struct UseMonadArgsImpl<Template, Monad<Args...>> {
+  typedef Template<Args...> type;
+};
+
+template<template<typename...> class Template, class Monad>
+struct UseMonadArgs {
+  typedef typename UseMonadArgsImpl< Template
+                                   , typename Monad::MonadType>::type type;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+// FunctionWithMonadArgs
+template<class Return, class Monad> struct FunctionWithMonadArgs {};
+
+template< class Return
+        , template<typename...> class Monad
+        , typename... Args>
+struct FunctionWithMonadArgs<Return, Monad<Args...>> {
+  typedef std::function<Return(Args...)> type;
+};
+
+////////////////////////////////////////////////////////////////////////////////
+// drop_args
+
+template<class F> struct drop_args_t {
+  F f;
+  drop_args_t(const F& f) : f(f) {}
+  template<typename... Args> 
+  typename std::result_of<F()>::type operator()(const Args&...) const {
+    return f();
+  }
+};
+
+template<class F> drop_args_t<F> drop_args(const F& f) {
+  return drop_args_t<F>(f);
+}
 
 } // masio namespace
 
