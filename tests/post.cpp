@@ -14,11 +14,9 @@ namespace asio = boost::asio;
 BOOST_AUTO_TEST_CASE(zero_binds_one_post) {
   asio::io_service ios;
 
-  Canceler canceler;
-
   auto p = post(ios) > success(10);
 
-  p.execute(canceler, [](result<int> i) {
+  p.execute([](result<int> i) {
      BOOST_REQUIRE(!i.is_error());
      BOOST_REQUIRE_EQUAL(i.value<0>(), 10);
      });
@@ -34,8 +32,6 @@ BOOST_AUTO_TEST_CASE(zero_binds_one_post) {
 BOOST_AUTO_TEST_CASE(binds_and_posts) {
   asio::io_service ios;
 
-  Canceler canceler;
-
   auto p = post(ios)
          > success(10)
         >= [&ios](int a) {
@@ -45,7 +41,7 @@ BOOST_AUTO_TEST_CASE(binds_and_posts) {
             return success<int>(a+2);
         };
 
-  p.execute(canceler, [](result<int> i) {
+  p.execute([](result<int> i) {
      BOOST_REQUIRE(!i.is_error());
      BOOST_REQUIRE_EQUAL(i.value<0>(), 23);
      });
@@ -66,8 +62,6 @@ BOOST_AUTO_TEST_CASE(fail1) {
 
   asio::io_service ios;
 
-  Canceler canceler;
-
   auto p = post(ios)
          > success<int>(10)
         >= [&ios](int a) {
@@ -77,7 +71,7 @@ BOOST_AUTO_TEST_CASE(fail1) {
             return success<int>(a+2);
         };
 
-  p.execute(canceler, [](result<int> i) {
+  p.execute([](result<int> i) {
      BOOST_REQUIRE(i.is_error());
      BOOST_REQUIRE_EQUAL(i.error(), operation_aborted);
      });
@@ -94,8 +88,6 @@ BOOST_AUTO_TEST_CASE(fail1) {
 BOOST_AUTO_TEST_CASE(fail2) {
   asio::io_service ios;
 
-  Canceler canceler;
-
   auto p = post(ios)
          > success<int>(10)
         >= [&ios](int a) {
@@ -105,7 +97,7 @@ BOOST_AUTO_TEST_CASE(fail2) {
           return fail<int>(asio::error::operation_aborted);
         };
 
-  p.execute(canceler, [](result<int> i) {
+  p.execute([](result<int> i) {
      BOOST_REQUIRE(i.is_error());
      BOOST_REQUIRE_EQUAL(i.error(), asio::error::operation_aborted);
      });
@@ -122,8 +114,6 @@ BOOST_AUTO_TEST_CASE(fail2) {
 //------------------------------------------------------------------------------
 BOOST_AUTO_TEST_CASE(canceling) {
   asio::io_service ios;
-
-  Canceler canceler;
 
   bool first_executed  = false;
   bool second_executed = false;
@@ -143,7 +133,7 @@ BOOST_AUTO_TEST_CASE(canceling) {
 
   bool executed = false;
 
-  p.execute(canceler, [&executed](result<float> i) {
+  p.execute([&executed](result<float> i) {
      executed = true;
      BOOST_REQUIRE(i.is_error());
      });
@@ -151,7 +141,7 @@ BOOST_AUTO_TEST_CASE(canceling) {
   int poll_count = 0;
 
   while(ios.poll_one()) {
-    canceler.cancel();
+    p.cancel();
     ++poll_count;
   }
 
@@ -165,8 +155,6 @@ BOOST_AUTO_TEST_CASE(canceling) {
 BOOST_AUTO_TEST_CASE(forever_test) {
   asio::io_service ios;
 
-  Canceler canceler;
-
   unsigned int call_count = 0;
 
   auto p = post(ios)
@@ -177,7 +165,9 @@ BOOST_AUTO_TEST_CASE(forever_test) {
 
   bool executed = false;
 
-  forever(p).execute(canceler, [&executed](result<> i) {
+  auto f = forever(p);
+
+  f.execute([&executed](result<> i) {
      executed = true;
      BOOST_REQUIRE(i.is_error());
      });
@@ -189,7 +179,7 @@ BOOST_AUTO_TEST_CASE(forever_test) {
     ++poll_count;
 
     if (poll_count == cancel_at) {
-      canceler.cancel();
+      f.cancel();
     }
   }
 

@@ -9,7 +9,7 @@ EXAMPLES    := chat_client
 all: $(EXAMPLES)
 
 run: all
-	@./chat_client localhost 9999
+	@gdb -ex=r --args ./chat_client localhost 9999
 
 %: %.cpp $(INC_FILES) Makefile
 	@echo $@

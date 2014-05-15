@@ -3,16 +3,20 @@
 
 namespace masio {
 
-struct accept : monad<> {
+struct Accept : monad<> {
   using tcp = boost::asio::ip::tcp;
 
-  accept(tcp::socket& socket, unsigned short port)
+  Accept(const Accept&) = delete;
+  Accept& operator=(const Accept&) = delete;
+
+  Accept(tcp::socket& socket, unsigned short port)
     : socket(socket)
     , endpoint(tcp::endpoint(tcp::v4(), port))
+    , canceled(false)
   {}
 
   template<class Rest>
-  void execute(Canceler& canceler, const Rest& rest) const {
+  void execute(const Rest& rest) {
     using namespace std;
     using namespace boost::asio;
     using namespace boost::asio::error;
@@ -21,21 +25,11 @@ struct accept : monad<> {
     using Fail    = typename result<>::Fail;
 
     auto& ios = socket.get_io_service();
+    acceptor  = make_shared<tcp::acceptor>(ios, endpoint);
 
-    auto acceptor = make_shared<tcp::acceptor>(ios, endpoint);
-
-    auto cancel_action = make_shared<Canceler::CancelAction>([acceptor]() {
-        acceptor->cancel();
-        });
-
-    canceler.link_cancel_action(*cancel_action);
-
-    acceptor->async_accept(socket, [rest, &canceler, cancel_action, acceptor]
-        (error_code error) {
-
-        cancel_action->unlink();
-
-        if (canceler.canceled()) {
+    acceptor->async_accept(socket, [this, rest] (error_code error) {
+        if (canceled) {
+          canceled = false;
           rest(Fail{operation_aborted});
         }
         else if (error) {
@@ -44,12 +38,27 @@ struct accept : monad<> {
         else {
           rest(Success());
         }
-        });
+      });
   }
 
-  tcp::socket&  socket;
-  tcp::endpoint endpoint;
+  bool cancel() {
+    if (!acceptor) { return false; }
+    if (canceled) { return true; }
+    canceled = true;
+    acceptor->cancel();
+    return true;
+  }
+
+private:
+  tcp::socket&                   socket;
+  tcp::endpoint                  endpoint;
+  std::shared_ptr<tcp::acceptor> acceptor;
+  bool                           canceled;
 };
+
+action<> accept(boost::asio::ip::tcp::socket& socket, unsigned short port) {
+  return make_action<Accept>(socket, port);
+}
 
 } // masio namespace
 #endif // ifndef __MASIO_ACCEPT_H__

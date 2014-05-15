@@ -4,17 +4,19 @@
 namespace masio {
 
 template<typename MutableBufferSequence>
-struct receive_task : monad<> {
+struct Receive : monad<> {
   using tcp = boost::asio::ip::tcp;
 
-  receive_task( tcp::socket& socket
-              , const MutableBufferSequence& buffer_sequence)
+  Receive( tcp::socket& socket
+         , const MutableBufferSequence& buffer_sequence)
     : socket(socket)
     , buffer_sequence(buffer_sequence)
+    , canceled(false)
+    , running(false)
   {}
 
   template<class Rest>
-  void execute(Canceler& canceler, const Rest& rest) const {
+  void execute(const Rest& rest) {
     using namespace std;
     using namespace boost::asio;
     using namespace boost::asio::error;
@@ -22,20 +24,15 @@ struct receive_task : monad<> {
     using Success = typename result<>::Success;
     using Fail    = typename result<>::Fail;
 
-    auto& s = socket;
+    running = true;
 
-    auto cancel_action = make_shared<Canceler::CancelAction>([&s]() {
-        s.cancel();
-        });
-
-    canceler.link_cancel_action(*cancel_action);
-
-    async_read(socket, buffer_sequence, [rest, &canceler, cancel_action]
+    async_read(socket, buffer_sequence, [rest, this]
         (error_code error, size_t /* size */) {
 
-        cancel_action->unlink();
+        running = false;
 
-        if (canceler.canceled()) {
+        if (canceled) {
+          canceled = false;
           rest(Fail{operation_aborted});
         }
         else if (error) {
@@ -47,15 +44,25 @@ struct receive_task : monad<> {
         });
   }
 
+  bool cancel() {
+    if (!running) return false;
+    if (canceled) return true;
+    canceled = true;
+    socket.close();
+    return true;
+  }
+
+private:
   tcp::socket&          socket;
   MutableBufferSequence buffer_sequence;
+  bool                  canceled;
+  bool                  running;
 };
 
 template<typename MutableBufferSequence>
-receive_task<MutableBufferSequence>
-receive( boost::asio::ip::tcp::socket& socket
-       , const MutableBufferSequence&  buffer) {
-  return receive_task<MutableBufferSequence>(socket, buffer);
+action<> receive( boost::asio::ip::tcp::socket& socket
+                , const MutableBufferSequence&  buffer) {
+  return make_action<Receive<MutableBufferSequence>>(socket, buffer);
 }
 
 } // masio namespace

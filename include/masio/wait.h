@@ -12,31 +12,29 @@ private:
   using Success = result<>::Success;
 
 public:
-
   wait(boost::asio::io_service& ios, unsigned int millis)
     : _io_service(ios)
     , _time(boost::posix_time::milliseconds(millis))
+    , _timer(std::make_shared<boost::asio::deadline_timer>(_io_service))
+    , _is_executing(std::make_shared<bool>(false))
+    , _canceled(std::make_shared<bool>(false))
   {}
 
-  template<class Rest>
-  void execute(Canceler& canceler, const Rest& rest) const {
+  template<class Rest> void execute(const Rest& rest) {
     using namespace std;
     using namespace boost::asio;
     using namespace boost::posix_time;
 
-    auto timer = make_shared<deadline_timer>(_io_service, _time);
+    *_canceled     = false;
+    *_is_executing = true;
 
-    auto cancel_action = make_shared<Canceler::CancelAction>([timer]() {
-        timer->cancel();
-        });
+    _timer->expires_from_now(_time);
+    _timer->async_wait([this, rest] (const error_code& error) {
 
-    canceler.link_cancel_action(*cancel_action);
+        *_is_executing = false;
 
-    timer->async_wait([&canceler, rest, timer, cancel_action]
-                      (const error_code& error){
-        cancel_action->unlink();
-
-        if (canceler.canceled()) {
+        if (*_canceled) {
+          *_canceled = false;
           rest(Fail{error::operation_aborted});
         }
         else if (error) {
@@ -48,9 +46,19 @@ public:
       });
   }
 
+  bool cancel() {
+    if (!*_is_executing) return false;
+    _timer->cancel();
+    *_canceled = true;
+    return true;
+  }
+
 private:
-  boost::asio::io_service&         _io_service;
-  boost::posix_time::time_duration _time;
+  boost::asio::io_service&                     _io_service;
+  boost::posix_time::time_duration             _time;
+  std::shared_ptr<boost::asio::deadline_timer> _timer;
+  std::shared_ptr<bool>                        _is_executing;
+  std::shared_ptr<bool>                        _canceled;
 };
 
 

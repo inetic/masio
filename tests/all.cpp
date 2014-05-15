@@ -29,10 +29,8 @@ std::ostream& operator<<(std::ostream& os, const system_clock::time_point& t) {
 BOOST_AUTO_TEST_CASE(test_all) {
   asio::io_service ios;
 
-  Canceler canceler;
-
-  auto p1 = post(ios) > success(11);
-  auto p2 = post(ios) > success(22);
+  auto p1 = post(ios) >= []() { return success(11); };
+  auto p2 = post(ios) >= []() { return success(22); };
 
   auto p = all(p1, p2);
 
@@ -40,7 +38,7 @@ BOOST_AUTO_TEST_CASE(test_all) {
 
   using Result = result<result<int>, result<int>>;
 
-  p.execute(canceler, [&executed](Result rs) {
+  p.execute([&executed](Result rs) {
      BOOST_REQUIRE(!rs.is_error());
 
      const auto& v0 = rs.value<0>();
@@ -71,8 +69,6 @@ BOOST_AUTO_TEST_CASE(test_all_wait) {
 
   asio::io_service ios;
 
-  Canceler canceler;
-
   typedef system_clock::time_point Time;
 
   unsigned int duration0 = 123;
@@ -89,7 +85,7 @@ BOOST_AUTO_TEST_CASE(test_all_wait) {
 
   using Results = result<result<Time>, result<Time>>;
 
-  p.execute(canceler, [&executed, start, duration0, duration1](Results rs) {
+  p.execute([&executed, start, duration0, duration1](Results rs) {
      BOOST_REQUIRE(!rs.is_error());
 
      const auto& r0 = rs.value<0>();
@@ -125,20 +121,19 @@ BOOST_AUTO_TEST_CASE(test_all_wait_and_cancel) {
 
   asio::io_service ios;
 
-  Canceler canceler;
-
   typedef system_clock::time_point Time;
 
   unsigned int duration0 = 123;
   unsigned int duration1 = 234;
 
+  auto p1 = wait(ios, duration1) >= []() { return success(now()); };
+
   auto p0 = wait(ios, duration0)
-         >= [&canceler]() {
-              canceler.cancel();
+         >= [&p1]() {
+              p1.cancel();
               return success(now());
             };
 
-  auto p1 = wait(ios, duration1) >= []() { return success(now()); };
 
   auto p = all(p0, p1);
 
@@ -148,7 +143,7 @@ BOOST_AUTO_TEST_CASE(test_all_wait_and_cancel) {
 
   using Results = result<result<Time>, result<Time>>;
 
-  p.execute(canceler, [&executed, start, duration0, duration1](Results ers) {
+  p.execute([&executed, start, duration0, duration1](Results ers) {
      BOOST_REQUIRE(!ers.is_error());
 
      const auto& r0 = ers.value<0>();
@@ -184,16 +179,12 @@ BOOST_AUTO_TEST_CASE(test_all_or_none_wait_and_fail) {
 
   asio::io_service ios;
 
-  Canceler canceler;
-
   typedef system_clock::time_point Time;
 
   unsigned int duration0 = 123;
   unsigned int duration1 = 234;
 
-  auto p0 = wait(ios, duration0)
-         >= [&canceler]() { return fail<Time>(fault); };
-
+  auto p0 = wait(ios, duration0) >= []() { return fail<Time>(fault); };
   auto p1 = wait(ios, duration1) >= []() { return success(now()); };
 
   auto p = all_or_none(p0, p1);
@@ -204,7 +195,7 @@ BOOST_AUTO_TEST_CASE(test_all_or_none_wait_and_fail) {
 
   using Results = result<result<Time>, result<Time>>;
 
-  p.execute(canceler, [&executed, start, duration0, duration1](Results ers) {
+  p.execute([&executed, start, duration0, duration1](Results ers) {
      BOOST_REQUIRE(!ers.is_error());
 
      const auto& r0 = ers.value<0>();
@@ -241,35 +232,32 @@ BOOST_AUTO_TEST_CASE(test_all_wait_and_pause) {
 
   asio::io_service ios;
 
-  Canceler canceler;
-  kicker   kick;
-
   typedef system_clock::time_point Time;
 
   unsigned int duration0 = 123;
   unsigned int duration1 = 234;
 
+  auto e = pause(ios);
+
+  auto start = now();
+
   auto p0 = wait(ios, duration0)
-         >= [&kick]() {
-              kick();
+         >= [&e]() {
+              e.emit();
               return success(now());
             };
 
-  auto p1 = pause(ios, kick)
-          > wait(ios, duration1)
-         >= []() {
-           return success(now());
-         };
+  auto p1 = e > wait(ios, duration1)
+         >= []() { return success(now()); };
 
   auto p = all(p0, p1);
 
   bool executed = false;
 
-  auto start = now();
 
   using Results = result<result<Time>, result<Time>>;
 
-  p.execute(canceler, [&executed, start, duration0, duration1] (Results rs) {
+  p.execute([&executed, start, duration0, duration1] (Results rs) {
      BOOST_REQUIRE(!rs.is_error());
 
      BOOST_REQUIRE(rs.value<0>().is_value());
@@ -302,26 +290,24 @@ BOOST_AUTO_TEST_CASE(test_all_wait_and_cancel_subcancelers) {
 
   asio::io_service ios;
 
-  Canceler canceler;
-  Canceler p1_canceler;
-
   typedef system_clock::time_point Time;
 
   unsigned int duration0 = 123;
   unsigned int duration1 = 234;
 
+  action<Time> p1;
+
   auto p0 = wait(ios, duration0)
-         >= [&p1_canceler]() {
-              p1_canceler.cancel();
+         >= [&p1]() {
+              p1.cancel();
               return success(now());
             }
          >= [](Time t) { return success(t); };
 
-  auto p1 = with_canceler( p1_canceler
-                       , wait(ios, duration1) >= []() {
-                             return success(now());
-                           })
-         >= [](Time t) { return success(t); };
+  p1 = wait(ios, duration1) >= []() {
+        return success(now());
+       }
+    >= [](Time t) { return success(t); };
 
   auto p = all(p0, p1);
 
@@ -331,7 +317,7 @@ BOOST_AUTO_TEST_CASE(test_all_wait_and_cancel_subcancelers) {
 
   using Results = result<result<Time>, result<Time>>;
 
-  p.execute(canceler, [&executed, start, duration0, duration1]
+  p.execute([&executed, start, duration0, duration1]
                   (Results rs) {
      BOOST_REQUIRE(!rs.is_error());
 

@@ -35,12 +35,12 @@ struct message {
 };
 
 struct chat_client {
-  chat_client(io_service& ios) : socket(ios) {}
+  chat_client(io_service& ios) : socket(ios), block(ios) {}
 
   ip::tcp::socket socket;
   message         inbound_message;
   queue<message>  outbound_messages;
-  kicker          kick;
+  masio::pause    block;
 };
 
 action<> receive_message(chat_client& c) {
@@ -69,12 +69,11 @@ action<> send_message(chat_client& c) {
 
   auto& socket = c.socket;
   auto& ms     = c.outbound_messages;
-  auto& ios    = socket.get_io_service();
 
   return success()
       >= [&]() -> action<> {
            if (ms.empty()) {
-             return pause(ios, c.kick);
+             return c.block;
            }
            else {
              return send(socket, buffer(ms.front().data))
@@ -106,10 +105,8 @@ int main(int argc, char* argv[]) {
                         > success();
                  };
 
-  Canceler canceler;
-
   boost::thread thread([&]() {
-      program.execute(canceler, [&](result<> ev) {
+      program.execute([&](result<> ev) {
         if (ev.is_error()) {
           cerr << "Error " << ev.error().message() << "\n";
         }
@@ -118,7 +115,6 @@ int main(int argc, char* argv[]) {
 
       ios.run();
 
-      cout << "Thread ended.\n";
       });
 
   cout << "Go\n";
@@ -130,11 +126,12 @@ int main(int argc, char* argv[]) {
 
     ios.post([body, &c]() {
         c.outbound_messages.push(message(body));
-        c.kick();
+        c.block.emit();
         });
   }
 
-  ios.post([&]() { canceler.cancel(); });
+  cout << "End\n";
+  ios.post([&]() { program.cancel(); });
   thread.join();
 }
 

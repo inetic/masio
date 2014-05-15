@@ -6,8 +6,7 @@ namespace masio {
 namespace detail {
   template<int I, int Max, class Rest, class Results, class Monads>
   struct AllExecute {
-    static void go( Canceler& canceler
-                  , const Monads& monads
+    static void go( Monads& monads
                   , const std::shared_ptr<size_t>&  remaining
                   , const std::shared_ptr<Results>& results
                   , const Rest& rest) {
@@ -16,10 +15,9 @@ namespace detail {
       using M = typename tuple_element<I, Tuple>::type;
       using R = typename UseMonadArgs<result, M>::type;
 
-      M m = get<I>(monads);
+      M& m = get<I>(monads);
 
-      m.execute(canceler,
-          [remaining, results, rest] (const R& r) {
+      m.execute([remaining, results, rest] (const R& r) {
           get<I>(results->values()) = r;
           if (--*remaining == 0) {
             rest(typename Results::Success(results->values()));
@@ -27,14 +25,13 @@ namespace detail {
           });
 
       detail::AllExecute<I+1, Max, Rest, Results, Monads>
-        ::go(canceler, monads, remaining, results, rest);
+        ::go(monads, remaining, results, rest);
     }
   };
 
   template<int Max, class Rest, class Results, class Monads>
   struct AllExecute<Max, Max, Rest, Results, Monads> {
-    static void go( Canceler& canceler
-                  , const Monads& monads
+    static void go( Monads& monads
                   , const std::shared_ptr<size_t>&  remaining
                   , const std::shared_ptr<Results>& results
                   , const Rest& rest) {}
@@ -48,10 +45,9 @@ private:
   using Results = result<typename UseMonadArgs<result, Ms>::type...>;
 
 public:
-  All(const Ms&... monads) : monads(monads...) {}
+  All(const Ms&... monads) : monads(monads...) { }
 
-  template<typename Rest>
-  void execute(Canceler& canceler, const Rest& rest) const {
+  template<typename Rest> void execute(const Rest& rest) {
     using namespace std;
 
     static constexpr unsigned int size = sizeof...(Ms);
@@ -59,7 +55,11 @@ public:
     auto results   = make_shared<Results>();
 
     detail::AllExecute<0, size, Rest, Results, Monads>
-      ::go(canceler, monads, remaining, results, rest);
+      ::go(monads, remaining, results, rest);
+  }
+
+  bool cancel() {
+    return cancel_monad_tuple(monads);
   }
 
 private:

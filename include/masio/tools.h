@@ -103,6 +103,52 @@ template<class F> drop_args_t<F> drop_args(const F& f) {
   return drop_args_t<F>(f);
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// insert_code
+template<class C, class F> struct insert_code_t {
+  C c;
+  F f;
+  insert_code_t(const C& c, const F& f) : c(c), f(f) {}
+
+  template<typename... Args> 
+  typename std::result_of<F(Args...)>::type
+  operator()(const Args&... args) const {
+    c();
+    return f(args...);
+  }
+};
+
+template<class C, class F>
+insert_code_t<C, F> insert_code(const C& c, const F& f) {
+  return insert_code_t<C, F>(c, f);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// cancel_monad_tuple
+namespace detail {
+  template<int I, int Max, class Monads>
+  struct CancelMonadTuple {
+    static bool go(Monads& monads) {
+      bool result = std::get<I>(monads).cancel();
+      return result
+          || detail::CancelMonadTuple<I+1, Max, Monads>::go(monads);
+    }
+  };
+
+  template<int Max, class Monads>
+  struct CancelMonadTuple<Max, Max, Monads> {
+    static bool go(Monads& monads) { return false; }
+  };
+} // detail namespace
+
+template<class MonadTuple>
+bool cancel_monad_tuple(MonadTuple& monads) {
+    return detail::CancelMonadTuple< 0
+                                   , std::tuple_size<MonadTuple>::value
+                                   , MonadTuple
+                                   >::go(monads);
+}
+
 } // masio namespace
 
 #endif // ifndef __MASIO_TOOLS_H__

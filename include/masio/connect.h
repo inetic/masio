@@ -12,7 +12,7 @@ template<typename Iterator> struct connect_task : monad<> {
   {}
 
   template<class Rest>
-  void execute(Canceler& canceler, const Rest& rest) const {
+  void execute(const Rest& rest) {
     using namespace std;
     using namespace boost::asio;
     using namespace boost::asio::error;
@@ -20,20 +20,15 @@ template<typename Iterator> struct connect_task : monad<> {
     using Success = typename result<>::Success;
     using Fail    = typename result<>::Fail;
 
-    auto& s = socket;
+    canceled = std::make_shared<bool>(false);
 
-    auto cancel_action = make_shared<Canceler::CancelAction>([&s]() {
-        s.cancel();
-        });
-
-    canceler.link_cancel_action(*cancel_action);
-
-    async_connect(socket, iterator, [rest, &canceler, cancel_action]
+    async_connect(socket, iterator, [this, rest]
         (error_code error, Iterator /* i TODO */) {
 
-        cancel_action->unlink();
+        bool c = *canceled;
+        canceled = nullptr;
 
-        if (canceler.canceled()) {
+        if (c) {
           rest(Fail{operation_aborted});
         }
         else if (error) {
@@ -45,8 +40,18 @@ template<typename Iterator> struct connect_task : monad<> {
         });
   }
 
-  tcp::socket& socket;
-  Iterator     iterator;
+  bool cancel() {
+    if (!canceled) return false;
+    if (*canceled) return true;
+    *canceled = true;
+    socket.close();
+    return true;
+  }
+
+private:
+  tcp::socket&          socket;
+  Iterator              iterator;
+  std::shared_ptr<bool> canceled;
 };
 
 template<typename Iterator>

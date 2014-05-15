@@ -6,8 +6,7 @@ namespace masio {
 namespace detail {
   template<int I, int Max, class Rest, class Results, class Monads>
   struct AllOrNoneExec {
-    static void go( Canceler& canceler
-                  , const Monads& monads
+    static void go( Monads& monads
                   , const std::shared_ptr<Results>& results
                   , const std::shared_ptr<size_t>& remaining
                   , const std::shared_ptr<boost::system::error_code>& first_error
@@ -17,15 +16,14 @@ namespace detail {
       using M = typename tuple_element<I, Tuple>::type;
       using R = typename UseMonadArgs<result, M>::type;
 
-      M m = get<I>(monads);
+      M& m = get<I>(monads);
 
-      m.execute(canceler,
-           [results, &canceler, rest, first_error, remaining](const R& r) {
+      m.execute([results, rest, first_error, remaining, monads](const R& r) {
          get<I>(results->values()) = r;
 
          if (r.is_error() && !*first_error) {
            *first_error = r.error();
-           canceler.cancel();
+           cancel_monad_tuple(const_cast<Monads&>(monads));
          }
 
          if(--*remaining == 0) {
@@ -34,14 +32,13 @@ namespace detail {
          });
 
       detail::AllOrNoneExec<I+1, Max, Rest, Results, Monads>
-        ::go(canceler, monads, results, remaining, first_error, rest);
+        ::go(monads, results, remaining, first_error, rest);
     }
   };
 
   template<int Max, class Rest, class Results, class Monads>
   struct AllOrNoneExec<Max, Max, Rest, Results, Monads> {
-    static void go( Canceler& canceler
-                  , const Monads& monads
+    static void go( Monads& monads
                   , const std::shared_ptr<Results>& results
                   , const std::shared_ptr<size_t>& remaining
                   , const std::shared_ptr<boost::system::error_code>& first_error
@@ -59,7 +56,7 @@ public:
   AllOrNone(const Ms&... monads) : monads(monads...) {}
 
   template<typename Rest>
-  void execute(Canceler& canceler, const Rest& rest) const {
+  void execute(const Rest& rest) {
     using namespace std;
     using error_code = boost::system::error_code;
 
@@ -70,7 +67,11 @@ public:
     auto first_error = make_shared<error_code>();
 
     detail::AllOrNoneExec<0, size, Rest, Results, Monads>
-      ::go(canceler, monads, results, remaining, first_error, rest);
+      ::go(monads, results, remaining, first_error, rest);
+  }
+
+  bool cancel() {
+    return cancel_monad_tuple(monads);
   }
 
 private:

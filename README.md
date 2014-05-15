@@ -21,14 +21,14 @@ auto program = resolve(ios, host_string, port_string)
             >= [&](tcp::resolver::iterator iterator) {
                  return connect(socket, iterator);
                }
-            >= [&](none_t) {
+            >= [&]() {
                  // Send and receive 'at the same time'.
                  // If one fails, cancel the other.
                  return all_or_none( receive(socket, buffer(...))
                                    , send(socket, buffer(...)));
                };
 
-program.execute(canceler, [](result<none_t> r) {
+program.execute([](result<> r) {
   ... // The action ended, handle it here.
   });
 

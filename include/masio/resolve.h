@@ -13,7 +13,9 @@ struct resolve : monad<boost::asio::ip::tcp::resolver::iterator> {
     : io_service(io_service)
     , host(host)
     , port(port)
-  {}
+    , canceled(std::make_shared<bool>(false))
+  {
+  }
 
   resolve( boost::asio::io_service& io_service
          , const std::string& host
@@ -21,34 +23,30 @@ struct resolve : monad<boost::asio::ip::tcp::resolver::iterator> {
     : io_service(io_service)
     , host(host)
     , port(std::to_string(port))
-  {}
+    , canceled(std::make_shared<bool>(false))
+  {
+  }
 
   template<class Rest>
-  void execute(Canceler& canceler, const Rest& rest) const {
+  void execute(const Rest& rest) {
     using namespace std;
     using namespace boost::asio;
     using namespace boost::asio::error;
     using boost::system::error_code;
-    using CancelAction = Canceler::CancelAction;
     using Success = typename result<value_type>::Success;
     using Fail    = typename result<value_type>::Fail;
 
-    auto resolver = make_shared<tcp::resolver>(io_service);
-
-    auto cancel_action = make_shared<CancelAction>([resolver]() {
-        resolver->cancel();
-        });
-
-    canceler.link_cancel_action(*cancel_action);
+    resolver = make_shared<tcp::resolver>(io_service);
 
     tcp::resolver::query query(host, port);
 
-    resolver->async_resolve(query, [rest, &canceler, cancel_action]
+    resolver->async_resolve(query, [rest, this]
         (error_code error, tcp::resolver::iterator iterator) {
 
-        cancel_action->unlink();
+        resolver = nullptr;
 
-        if (canceler.canceled()) {
+        if (*canceled) {
+          *canceled = false;
           rest(Fail{operation_aborted});
         }
         else if (error) {
@@ -60,9 +58,20 @@ struct resolve : monad<boost::asio::ip::tcp::resolver::iterator> {
         });
   }
 
-  boost::asio::io_service& io_service;
-  std::string              host;
-  std::string              port;
+  bool cancel() {
+    if (!resolver) return false;
+    if (*canceled) return true;
+    *canceled = true;
+    resolver->cancel();
+    return true;
+  }
+
+private:
+  boost::asio::io_service&       io_service;
+  std::string                    host;
+  std::string                    port;
+  std::shared_ptr<tcp::resolver> resolver;
+  std::shared_ptr<bool>          canceled;
 };
 
 } // masio namespace

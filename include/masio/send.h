@@ -4,16 +4,21 @@
 namespace masio {
 
 template<typename ConstBufferSequence>
-struct send_task : monad<> {
+struct Send : monad<> {
   using tcp = boost::asio::ip::tcp;
 
-  send_task(tcp::socket& socket, const ConstBufferSequence& buffer_sequence)
+  Send(const Send&) = delete;
+  Send& operator=(const Send&) = delete;
+
+  Send(tcp::socket& socket, const ConstBufferSequence& buffer_sequence)
     : socket(socket)
     , buffer_sequence(buffer_sequence)
+    , canceled(false)
+    , running(false)
   {}
 
   template<class Rest>
-  void execute(Canceler& canceler, const Rest& rest) const {
+  void execute(const Rest& rest) {
     using namespace std;
     using namespace boost::asio;
     using namespace boost::asio::error;
@@ -21,20 +26,13 @@ struct send_task : monad<> {
     using Success = typename result<>::Success;
     using Fail    = typename result<>::Fail;
 
-    auto& s = socket;
-
-    auto cancel_action = make_shared<Canceler::CancelAction>([&s]() {
-        s.cancel();
-        });
-
-    canceler.link_cancel_action(*cancel_action);
-
-    async_write(socket, buffer_sequence, [rest, &canceler, cancel_action]
+    running = true;
+    async_write(socket, buffer_sequence, [rest, this]
         (error_code error, size_t /* size */) {
+        running = false;
 
-        cancel_action->unlink();
-
-        if (canceler.canceled()) {
+        if (canceled) {
+          canceled = false;
           rest(Fail{operation_aborted});
         }
         else if (error) {
@@ -43,17 +41,28 @@ struct send_task : monad<> {
         else {
           rest(Success());
         }
-        });
+      });
   }
 
+  bool cancel() {
+    if (!running) return false;
+    if (canceled) return true;
+    canceled = true;
+    socket.close();
+    return true;
+  }
+
+private:
   tcp::socket&        socket;
   ConstBufferSequence buffer_sequence;
+  bool                canceled;
+  bool                running;
 };
 
 template<typename ConstBufferSequence>
-send_task<ConstBufferSequence> send( boost::asio::ip::tcp::socket& socket
-                                   , const ConstBufferSequence&    buffer) {
-  return send_task<ConstBufferSequence>(socket, buffer);
+action<> send( boost::asio::ip::tcp::socket& socket
+                              , const ConstBufferSequence&    buffer) {
+  return make_action<Send<ConstBufferSequence>>(socket, buffer);
 }
 
 } // masio namespace

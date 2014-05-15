@@ -1,20 +1,10 @@
 #ifndef __MASIO_H__
 #define __MASIO_H__
 
-#include <boost/none.hpp>
 #include <boost/asio.hpp>
-
-namespace masio {
-
-using boost::none;
-using boost::none_t;
-
-} // masio namespace
 
 #include <masio/tools.h>
 #include <masio/monad.h>
-
-#include <masio/canceler.h>
 #include <masio/result.h>
 
 #include <masio/return.h>
@@ -23,7 +13,6 @@ using boost::none_t;
 #include <masio/action.h>
 #include <masio/all.h>
 #include <masio/may_fail.h>
-#include <masio/with_canceler.h>
 #include <masio/all_or_none.h>
 
 #include <masio/post.h>

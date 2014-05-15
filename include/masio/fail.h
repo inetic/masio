@@ -9,9 +9,11 @@ template<class... A> struct Fail : monad<A...> {
   Fail(const error_code& error) : error(error) {}
 
   template<typename Rest>
-  void execute(Canceler& canceler, const Rest& rest) const {
+  void execute(const Rest& rest) const {
     rest(typename result<A...>::Fail{error});
   }
+
+  bool cancel() { return false; }
 
   error_code error;
 };

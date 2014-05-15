@@ -25,8 +25,6 @@ BOOST_AUTO_TEST_CASE(test_wait) {
 
   unsigned int wait_duration = 500; // Half a second
 
-  Canceler canceler;
-
   auto p = post(ios)
          > success<int>(10)
         >= [&ios, wait_duration](int a) {
@@ -39,7 +37,7 @@ BOOST_AUTO_TEST_CASE(test_wait) {
 
   auto start = now();
 
-  p.execute(canceler, [start, wait_duration](result<int> i) {
+  p.execute([start, wait_duration](result<int> i) {
      BOOST_REQUIRE(!i.is_error());
      BOOST_REQUIRE_EQUAL(i.value<0>(), 43);
      REQUIRE_DURATION(now() - start, wait_duration);
@@ -58,8 +56,6 @@ BOOST_AUTO_TEST_CASE(test_wait) {
 BOOST_AUTO_TEST_CASE(test_cancel_wait) {
   asio::io_service ios;
 
-  Canceler canceler;
-
   unsigned int wait_duration = 10*1000; // Ten seconds
 
   auto p = post(ios)
@@ -74,7 +70,7 @@ BOOST_AUTO_TEST_CASE(test_cancel_wait) {
 
   auto start = now();
 
-  p.execute(canceler, [start](result<int> i) {
+  p.execute([start](result<int> i) {
      BOOST_REQUIRE(i.is_error());
      BOOST_REQUIRE_EQUAL(i.error(), asio::error::operation_aborted);
      REQUIRE_DURATION(now() - start, 0);
@@ -83,7 +79,7 @@ BOOST_AUTO_TEST_CASE(test_cancel_wait) {
   int poll_count = 0;
 
   while(ios.run_one()) {
-    canceler.cancel();
+    p.cancel();
     ++poll_count;
   }
 
@@ -94,8 +90,6 @@ BOOST_AUTO_TEST_CASE(test_cancel_wait) {
 //------------------------------------------------------------------------------
 BOOST_AUTO_TEST_CASE(test_wait_and_may_fail) {
   asio::io_service ios;
-
-  Canceler canceler;
 
   unsigned int wait_duration = 100; // Milliseconds
 
@@ -108,7 +102,7 @@ BOOST_AUTO_TEST_CASE(test_wait_and_may_fail) {
 
   auto start = now();
 
-  p.execute(canceler, [start, wait_duration](result<result<int>> i) {
+  p.execute([start, wait_duration](result<result<int>> i) {
      BOOST_REQUIRE(!i.is_error());
      BOOST_REQUIRE(!i.value<0>().is_error());
      BOOST_REQUIRE_EQUAL(i.value<0>().value<0>(), 21);
@@ -128,8 +122,6 @@ BOOST_AUTO_TEST_CASE(test_wait_and_may_fail) {
 BOOST_AUTO_TEST_CASE(test_cancel_wait_and_may_fail) {
   asio::io_service ios;
 
-  Canceler canceler;
-
   unsigned int wait_duration = 10*1000; // Ten seconds
 
   auto p = post(ios)
@@ -141,7 +133,7 @@ BOOST_AUTO_TEST_CASE(test_cancel_wait_and_may_fail) {
 
   auto start = now();
 
-  p.execute(canceler, [start](result<result<int>> i) {
+  p.execute([start](result<result<int>> i) {
      BOOST_REQUIRE(!i.is_error());
      BOOST_REQUIRE(i.value<0>().is_error());
      BOOST_REQUIRE_EQUAL(i.value<0>().error(), asio::error::operation_aborted);
@@ -151,7 +143,7 @@ BOOST_AUTO_TEST_CASE(test_cancel_wait_and_may_fail) {
   int poll_count = 0;
 
   while(ios.run_one()) {
-    canceler.cancel();
+    p.cancel();
     ++poll_count;
   }
 

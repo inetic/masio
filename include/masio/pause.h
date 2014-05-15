@@ -5,66 +5,90 @@ namespace masio {
 
 class pause;
 
-class kicker {
-  friend class pause;
-  using Rest = std::function<void ()>;
+class pause : public monad<> {
+private:
+  typedef std::function<void(result<>)> Rest;
+  typedef boost::asio::io_service::work Work;
+  typedef result<>::Success Success;
+  typedef result<>::Fail    Fail;
+
+  struct State {
+    std::shared_ptr<Work> work;
+    bool                  canceled;
+    Rest                  rest;
+  };
 
 public:
-  void operator()() {
-    if (rest) {
-      auto copy = rest;
-      rest = 0;
-      copy();
-    }
-  }
-
-  kicker() {};
-  kicker(const kicker&) = delete;
-  kicker& operator=(const kicker&) = delete;
-
-private:
-  Rest rest;
-};
-
-struct pause : monad<> {
-  pause(boost::asio::io_service& io_service, kicker& kick)
+  pause(boost::asio::io_service& io_service)
     : io_service(io_service)
-    , kick(kick) {}
+    , state(std::make_shared<State>())
+  {
+    state->canceled  = false;
+  }
 
   template<class Rest>
-  void execute(Canceler& canceler, const Rest& rest) const {
+  void execute(const Rest& rest) {
     using namespace std;
+    using namespace boost::asio;
     using namespace boost::asio::error;
-    using Fail    = result<>::Fail;
-    using Success = result<>::Success;
 
-    auto kick_ptr = &kick;
-    auto ios_ptr  = &io_service;
-
-    auto cancel_action = make_shared<Canceler::CancelAction>(
-        [rest, kick_ptr, ios_ptr]() {
-          kick_ptr->rest = 0;
-          ios_ptr->post([rest]() { rest(Fail{operation_aborted}); });
-        });
-
-    canceler.link_cancel_action(*cancel_action);
-
-    kick.rest = [rest, cancel_action, ios_ptr, &canceler]() {
-        cancel_action->unlink();
-
-        ios_ptr->post([rest, &canceler]() {
-            if (!canceler.canceled()) {
-              rest(Success{});
-            }
-            else {
-              rest(Fail{operation_aborted});
-            }
-          });
-        };
+    state->rest = rest;
+    state->work = make_shared<Work>(io_service);
   }
 
+  // Return true if there was a pending action.
+  bool emit() {
+    using namespace std;
+    using namespace boost::asio::error;
+
+    if (!state->rest) { return false; }
+    if (!state->work) {
+      // Either emit() or cancel() was previously called.
+      return true;
+    }
+
+    state->work = nullptr;
+
+    io_service.post([this]() {
+        if (state->canceled) {
+          state->canceled = false;
+          run_rest(Fail{operation_aborted});
+        }
+        else {
+          run_rest(Success());
+        }
+        });
+
+    return true;
+  }
+
+  bool cancel() {
+    using namespace boost::asio::error;
+    if (!state->rest) { return false; }
+
+    state->canceled = true;
+
+    if (state->work) {
+      // Neither emit() nor cancel() was previously called.
+      state->work     = nullptr;
+      io_service.post([this]() {
+          run_rest(Fail{operation_aborted});
+          });
+    }
+
+    return true;
+  }
+
+private:
+  template<class Result> void run_rest(const Result& result) {
+    auto rest = state->rest;
+    state->rest = nullptr;
+    rest(result);
+  }
+
+private:
   boost::asio::io_service& io_service;
-  kicker& kick;
+  std::shared_ptr<State>   state;
 };
 
 } // masio namespace

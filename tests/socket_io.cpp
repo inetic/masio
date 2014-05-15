@@ -37,9 +37,7 @@ BOOST_AUTO_TEST_CASE(test_accept_connect) {
 
   using Results = result<result<>, result<>>;
 
-  Canceler canceler;
-
-  p.execute(canceler, [&executed](Results rs) {
+  p.execute([&executed](Results rs) {
      BOOST_REQUIRE(!rs.is_error());
 
      BOOST_REQUIRE(rs.value<0>().is_value());
@@ -83,9 +81,7 @@ BOOST_AUTO_TEST_CASE(test_connect_accept) {
 
   using Results = result<result<>, result<>>;
 
-  Canceler canceler;
-
-  p.execute(canceler, [&executed](Results rs) {
+  p.execute([&executed](Results rs) {
      BOOST_REQUIRE(!rs.is_error());
 
      BOOST_REQUIRE(rs.value<0>().is_value());
@@ -119,15 +115,17 @@ BOOST_AUTO_TEST_CASE(test_connect_accept) {
 //
 //  unsigned short port = 9090;
 //
-//  Canceler canceler;
+//  action<none_t> p2ref;
 //
 //  auto p2 = all( accept(server, port)
 //               , wait(ios, 100)
-//                 >= [&canceler](none_t) {
-//                   canceler.cancel();
+//                 >= [&p2ref](none_t) {
+//                   p2ref.cancel();
 //                   return success(none);
 //                 })
 //          > success(none);
+//
+//  p2ref = p2;
 //
 //  auto p = resolve(ios, "localhost", port)
 //        >= [&client, p2](iterator i) {
@@ -139,7 +137,7 @@ BOOST_AUTO_TEST_CASE(test_connect_accept) {
 //  using Results = result<result<none_t>, result<none_t>>;
 //
 //
-//  p.execute(canceler, [&executed](Results rs) {
+//  p.execute([&executed](Results rs) {
 //     BOOST_REQUIRE(!rs.is_error());
 //
 //     BOOST_REQUIRE(rs.value<0>().is_error());
@@ -157,7 +155,7 @@ BOOST_AUTO_TEST_CASE(test_connect_accept) {
 //  BOOST_REQUIRE(executed);
 //  BOOST_REQUIRE_EQUAL(poll_count, 4);
 //}
-
+//
 //------------------------------------------------------------------------------
 BOOST_AUTO_TEST_CASE(test_send_receive) {
   using masio::accept;
@@ -189,9 +187,7 @@ BOOST_AUTO_TEST_CASE(test_send_receive) {
 
   using Results = result<result<>, result<>>;
 
-  Canceler canceler;
-
-  p.execute(canceler, [&executed, &rx_buffer, &tx_buffer](Results rs) {
+  p.execute([&executed, &rx_buffer, &tx_buffer](Results rs) {
      BOOST_REQUIRE(!rs.is_error());
 
      BOOST_REQUIRE(rs.value<0>().is_value());

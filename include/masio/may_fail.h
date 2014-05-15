@@ -10,24 +10,28 @@ public:
     : _delegate(delegate)
   { }
 
-  template<typename Rest>
-  void execute(Canceler& c, const Rest& rest) const override {
+  template<typename Rest> void execute(const Rest& rest) override {
     using namespace boost::asio;
 
     using OrigResult = typename UseMonadArgs<result, MA>::type;
     using Result     = result<OrigResult>;
 
-    _delegate.execute(c, [&c, rest](const OrigResult& ea) {
+    _delegate.execute([rest](const OrigResult& ea) {
         using Success = typename Result::Success;
-        using Fail    = typename Result::Fail;
+        //using Fail    = typename Result::Fail;
 
-        if (c.canceled() && !ea.is_error()) {
-          rest(Result(Success{Fail{error::operation_aborted}}));
-        }
-        else {
-          rest(Result(Success{ea}));
-        }
+        rest(Result(Success{ea}));
+        //if (c.canceled() && !ea.is_error()) {
+        //  rest(Result(Success{Fail{error::operation_aborted}}));
+        //}
+        //else {
+        //  rest(Result(Success{ea}));
+        //}
       });
+  }
+
+  bool cancel() {
+    return _delegate.cancel();
   }
 
 private:
