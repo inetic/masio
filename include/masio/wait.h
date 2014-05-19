@@ -28,13 +28,17 @@ public:
     *_canceled     = false;
     *_is_executing = true;
 
+    auto is_executing = _is_executing;
+    auto canceled     = _canceled;
+
+    auto self = this;
     _timer->expires_from_now(_time);
-    _timer->async_wait([this, rest] (const error_code& error) {
+    _timer->async_wait([is_executing, canceled, rest, self] (const error_code& error) {
 
-        *_is_executing = false;
+        *is_executing = false;
 
-        if (*_canceled) {
-          *_canceled = false;
+        if (*canceled) {
+          *canceled = false;
           rest(Fail{error::operation_aborted});
         }
         else if (error) {

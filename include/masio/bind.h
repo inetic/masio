@@ -13,8 +13,11 @@ template<class MA, class MB> struct Bind
 
   using F = typename FunctionWithMonadArgs<MB, typename MA::MonadType>::type;
 
-  Bind(const MA& ma, const F& f) : ma(ma), mb(nullptr), f(f) {}
-  Bind(MA&& ma, const F& f)      : ma(ma), mb(nullptr), f(f) {}
+  Bind(const MA& ma, const F& f)
+    : ma(ma), is_running(std::make_shared<bool>(false)), f(f) {}
+
+  Bind(MA&& ma, const F& f)
+    : ma(ma), is_running(std::make_shared<bool>(false)), f(f) {}
 
   // [s -> (Ea -> r) -> r]
   template<class Rest>
@@ -31,7 +34,9 @@ template<class MA, class MB> struct Bind
         }
         else {
           mb = std::make_shared<MB>(apply_tuple(fcopy, ea.values()));
-          mb->execute(insert_code([this] () { mb = nullptr; }, rest));
+          *is_running = true;
+          auto ir = is_running;
+          mb->execute(insert_code([ir] () { *ir = false; }, rest));
         }
         });
   }
@@ -40,7 +45,7 @@ template<class MA, class MB> struct Bind
     if (ma.cancel()) {
       return true;
     }
-    if (mb && mb->cancel()) {
+    if (*is_running && mb->cancel()) {
       return true;
     }
     return false;
@@ -48,7 +53,8 @@ template<class MA, class MB> struct Bind
 
 private:
   MA  ma;
-  std::shared_ptr<MB> mb;
+  std::shared_ptr<bool> is_running;
+  std::shared_ptr<MB>   mb;
   F   f;
 };
 

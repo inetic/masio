@@ -6,6 +6,7 @@
 #include <masio/tools.h>
 #include <masio/monad.h>
 #include <masio/result.h>
+#include <masio/debug.h>
 
 #include <masio/return.h>
 #include <masio/bind.h>
@@ -29,7 +30,9 @@ namespace masio {
 
 template<class MA>
 action<> forever(const MA& ma) {
-  return ma >= drop_args([ma]() { return forever(ma); });
+  return ma >= drop_args([ma]() {
+      return forever(ma);
+      });
 }
 
 } // masio namespace

@@ -19,6 +19,7 @@ system_clock::time_point now() { return system_clock::now(); }
   BOOST_REQUIRE_LE( abs(duration_cast<milliseconds>(duration).count() \
                         - reference)\
                   , 1);
+
 //------------------------------------------------------------------------------
 BOOST_AUTO_TEST_CASE(test_wait) {
   asio::io_service ios;

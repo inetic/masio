@@ -149,6 +149,14 @@ bool cancel_monad_tuple(MonadTuple& monads) {
                                    >::go(monads);
 }
 
+////////////////////////////////////////////////////////////////////////////////
+// whatever
+struct whatever_t {
+  template<typename... Args> void operator()(Args&&...) const {}
+};
+
+static constexpr whatever_t whatever;
+
 } // masio namespace
 
 #endif // ifndef __MASIO_TOOLS_H__

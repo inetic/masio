@@ -56,6 +56,7 @@ private:
   bool                           canceled;
 };
 
+inline
 action<> accept(boost::asio::ip::tcp::socket& socket, unsigned short port) {
   return make_action<Accept>(socket, port);
 }

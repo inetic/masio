@@ -20,9 +20,32 @@ template<class... A> struct result
   typedef std::tuple<A...>          Tuple;
   typedef boost::system::error_code error_code;
 
-  result() {}
+  result() : _is_value(false) {}
   result(const Success& a) : _is_value(true) { new (&_value) Tuple(a); }
   result(const Fail&    a) : _is_value(false), _e(a.value) {}
+
+  result(const result& other) {
+    _is_value = other._is_value;
+    if (_is_value) {
+      new (&_value) Tuple(other.values());
+    }
+    else {
+      _e = other._e;
+    }
+  }
+
+  const result& operator=(const result& other) {
+    if (_is_value) { reinterpret_cast<Tuple&>(_value).~Tuple(); }
+    if (other._is_value) {
+      _is_value = true;
+      new (&_value) Tuple(other.values());
+    }
+    else {
+      _is_value = false;
+      _e = other._e;
+    }
+    return *this;
+  }
 
   bool is_error() const;
   bool is_value() const;
