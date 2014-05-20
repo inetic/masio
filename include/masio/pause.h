@@ -16,6 +16,8 @@ private:
     std::shared_ptr<Work> work;
     bool                  canceled;
     Rest                  rest;
+
+    State() : canceled(false) {}
   };
 
 public:
@@ -23,7 +25,6 @@ public:
     : io_service(io_service)
     , state(std::make_shared<State>())
   {
-    state->canceled  = false;
   }
 
   template<class Rest>
@@ -83,6 +84,7 @@ private:
   template<class Result> void run_rest(const Result& result) {
     auto rest = state->rest;
     state->rest = nullptr;
+    state->canceled = false;
     rest(result);
   }
 

@@ -129,9 +129,9 @@ namespace detail {
   template<int I, int Max, class Monads>
   struct CancelMonadTuple {
     static bool go(Monads& monads) {
-      bool result = std::get<I>(monads).cancel();
-      return result
-          || detail::CancelMonadTuple<I+1, Max, Monads>::go(monads);
+      bool result1 = std::get<I>(monads).cancel();
+      bool result2 = detail::CancelMonadTuple<I+1, Max, Monads>::go(monads);
+      return result1 || result2;
     }
   };
 
