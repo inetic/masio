@@ -15,6 +15,7 @@
 #include <masio/all.h>
 #include <masio/may_fail.h>
 #include <masio/all_or_none.h>
+#include <masio/restartable.h>
 
 #include <masio/post.h>
 #include <masio/wait.h>
