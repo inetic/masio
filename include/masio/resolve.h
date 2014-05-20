@@ -22,7 +22,7 @@ struct resolve : monad<boost::asio::ip::tcp::resolver::iterator> {
          , unsigned short port)
     : io_service(io_service)
     , host(host)
-    , port(std::to_string(port))
+    , port(to_string(port))
     , canceled(std::make_shared<bool>(false))
   {
   }
@@ -64,6 +64,13 @@ struct resolve : monad<boost::asio::ip::tcp::resolver::iterator> {
     *canceled = true;
     resolver->cancel();
     return true;
+  }
+
+private:
+  static std::string to_string(unsigned short port) {
+    std::stringstream ss;
+    ss << port;
+    return ss.str();
   }
 
 private:
