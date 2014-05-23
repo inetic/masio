@@ -15,9 +15,12 @@ public:
 
     using OrigResult = typename UseMonadArgs<result, MA>::type;
 
+#ifndef __ANDROID__
     std::cout << "started: " << _message << std::endl;
+#endif
 
     _delegate.execute([this, rest](const OrigResult& ea) {
+#ifndef __ANDROID__
         if (ea.is_error()) {
           std::cout << "ended: " << _message
                     << " (" << ea.error().message() << ")" << std::endl;
@@ -25,6 +28,7 @@ public:
         else {
           std::cout << "ended: " << _message << std::endl;
         }
+#endif
         rest(ea);
       });
   }
