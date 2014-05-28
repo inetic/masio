@@ -52,11 +52,12 @@ public:
     return false;
   }
 
-  ~restartable() { cancel(); }
+  ~restartable() {
+    cancel();
+  }
 
 private:
   static void execute(const std::shared_ptr<Data>& data) {
-    assert(data->state == idle);
     switch (data->state) {
       case idle: data->state = started;
                  data->delegate.execute([data](result<>) {

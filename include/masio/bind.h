@@ -14,10 +14,12 @@ template<class MA, class MB> struct Bind
   using F = typename FunctionWithMonadArgs<MB, typename MA::MonadType>::type;
 
   Bind(const MA& ma, const F& f)
-    : ma(ma), is_running(std::make_shared<bool>(false)), f(f) {}
+    : ma(ma), is_running(std::make_shared<bool>(false)), f(f) {
+    }
 
   Bind(MA&& ma, const F& f)
-    : ma(ma), is_running(std::make_shared<bool>(false)), f(f) {}
+    : ma(ma), is_running(std::make_shared<bool>(false)), f(f) {
+    }
 
   // [s -> (Ea -> r) -> r]
   template<class Rest>
