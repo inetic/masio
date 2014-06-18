@@ -3,6 +3,8 @@
 
 #ifdef __ANDROID__
 #include <android/log.h>
+#else
+#include <iostream>
 #endif // ifdef __ANDROID__
 
 namespace masio {
