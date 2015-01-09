@@ -93,7 +93,7 @@ struct FunctionWithMonadArgs<Return, Monad<Args...>> {
 template<class F> struct drop_args_t {
   F f;
   drop_args_t(const F& f) : f(f) {}
-  template<typename... Args> 
+  template<typename... Args>
   typename std::result_of<F()>::type operator()(const Args&...) const {
     return f();
   }
@@ -110,7 +110,7 @@ template<class C, class F> struct insert_code_t {
   F f;
   insert_code_t(const C& c, const F& f) : c(c), f(f) {}
 
-  template<typename... Args> 
+  template<typename... Args>
   typename std::result_of<F(Args...)>::type
   operator()(const Args&... args) const {
     c();
@@ -155,7 +155,7 @@ struct whatever_t {
   template<typename... Args> void operator()(Args&&...) const {}
 };
 
-static constexpr whatever_t whatever;
+static constexpr whatever_t whatever = {};
 
 } // masio namespace
 

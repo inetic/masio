@@ -5,7 +5,7 @@
 
 namespace masio {
 
-template<class, class> class Bind;
+template<class, class> struct Bind;
 
 template<typename... A>
 struct monad {
@@ -23,7 +23,7 @@ template< class MA
 Bind<MA, MB> operator>=(const MA& ma, const F& f) {
   return Bind<MA, MB>(ma, f);
 }
-  
+
 template< class MA
         , typename F
         , typename MB = typename ResultOf<F, typename MA::MonadType>::type
@@ -34,7 +34,7 @@ template< class MA
 Bind<MA, MB> operator>=(MA&& ma, const F& f) {
   return Bind<MA, MB>(std::forward<MA>(ma), f);
 }
-  
+
 template< typename MA
         , typename MB
         // Only apply these operators if MA and MB are monads.

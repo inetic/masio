@@ -18,7 +18,7 @@ struct message {
 
   message(const string& message) {
     data.resize(message.size() + header_length);
-    sprintf(&data[0], "%4d", message.size());
+    sprintf(&data[0], "%4d", (int) message.size());
     memcpy(&data[4], message.c_str(), message.size());
   }
 
@@ -60,7 +60,7 @@ action<> receive_message(chat_client& c) {
       >= [&]() {
            cout << "Received: " << m.body() << "\n";
            return success();
-         }; 
+         };
 }
 
 action<> send_message(chat_client& c) {
