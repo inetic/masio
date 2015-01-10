@@ -1,4 +1,5 @@
-
+CXX         := g++
+# CXX         := clang++
 INC_DIR     := ../include
 INC_FILES   := $(shell find $(INC_DIR) -name '*.h')
 LIBS        := -lboost_system -lboost_thread -lpthread
@@ -13,7 +14,7 @@ run: all
 
 %: %.cpp $(INC_FILES) Makefile
 	@echo $@
-	@g++ -I$(INC_DIR) -Wall -ggdb -std=c++11 $< $(LIBS) -o $@
+	@$(CXX) -I$(INC_DIR) -Wall -ggdb -std=c++11 $< $(LIBS) -o $@
 
 clean:
 	@-for t in $(EXAMPLES); do rm ./$$t; done

@@ -10,7 +10,7 @@ public:
     : _delegate(delegate)
   { }
 
-  template<typename Rest> void execute(const Rest& rest) override {
+  template<typename Rest> void execute(const Rest& rest) {
     using namespace boost::asio;
 
     using OrigResult = typename UseMonadArgs<result, MA>::type;
